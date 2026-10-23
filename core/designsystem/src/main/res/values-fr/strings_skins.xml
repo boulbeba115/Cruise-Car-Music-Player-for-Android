@@ -14,4 +14,6 @@
     <string name="skin_oled_tagline">Noir absolu, grands textes, rien d\'autre. Le plus léger pour le processeur.</string>
     <string name="skin_daylight">Plein jour</string>
     <string name="skin_daylight_tagline">Clair et très contrasté pour les journées ensoleillées.</string>
+    <string name="skin_tape">Platine K7</string>
+    <string name="skin_tape_tagline">Une cassette des années 80 : votre album sur l’étiquette, la bande défile avec la chanson.</string>
 </resources>

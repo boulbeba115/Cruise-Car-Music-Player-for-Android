@@ -14,4 +14,6 @@
     <string name="skin_oled_tagline">True black, big type, nothing else. Lightest on the processor.</string>
     <string name="skin_daylight">Daylight</string>
     <string name="skin_daylight_tagline">Bright and high contrast for sunny days.</string>
+    <string name="skin_tape">Tape Deck</string>
+    <string name="skin_tape_tagline">An 80s cassette: your album is the label, the tape winds with the song.</string>
 </resources>

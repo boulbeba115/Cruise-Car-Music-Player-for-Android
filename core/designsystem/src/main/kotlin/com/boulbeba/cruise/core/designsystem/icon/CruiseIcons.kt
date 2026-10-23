@@ -46,4 +46,5 @@ object CruiseIcons {
     @DrawableRes val Gesture = R.drawable.ic_gesture
     @DrawableRes val Palette = R.drawable.ic_palette
     @DrawableRes val Refresh = R.drawable.ic_refresh
+    @DrawableRes val Mic = R.drawable.ic_mic
 }

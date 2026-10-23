@@ -48,6 +48,9 @@ import java.io.File
 import java.util.concurrent.Executors
 import javax.inject.Inject
 
+/** Intent action that opens Cruise straight into a voice command. */
+const val ACTION_VOICE = "com.boulbeba.cruise.action.VOICE"
+
 /**
  * Background playback (SPEC §4.1). One ExoPlayer behind a [MediaSession]: the notification, the steering wheel,
  * Bluetooth and the UI are all controllers of the same session.
@@ -343,6 +346,11 @@ class PlaybackService : MediaSessionService(), MediaCommands {
 
     override fun openApp() {
         appLaunchIntentRaw()?.let { startActivity(it) }
+    }
+
+    /** Opens Cruise listening for a voice command (steering-wheel VOICE button). */
+    override fun voice() {
+        appLaunchIntentRaw()?.let { startActivity(it.setAction(ACTION_VOICE).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)) }
     }
 
     override fun nextFolder() = jumpFolder(+1)

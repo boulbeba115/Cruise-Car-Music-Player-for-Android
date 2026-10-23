@@ -41,4 +41,6 @@
     <string name="appearance_perf_full">Full</string>
     <string name="appearance_perf_balanced">Balanced</string>
     <string name="appearance_perf_saver">Saver</string>
+    <string name="settings_gestures">Gestures on Now Playing</string>
+    <string name="settings_gestures_hint">Hold anywhere: play / pause · hold and slide: scrub · swipe left / right: track · swipe up / down: volume</string>
 </resources>

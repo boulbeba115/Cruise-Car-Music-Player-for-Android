@@ -8,6 +8,7 @@ import com.boulbeba.cruise.core.data.library.LibraryRepository
 import com.boulbeba.cruise.core.data.tags.LrcParser
 import com.boulbeba.cruise.core.data.tags.LyricLine
 import com.boulbeba.cruise.core.model.MediaIds
+import com.boulbeba.cruise.core.playback.PlaybackSettings
 import com.boulbeba.cruise.core.playback.PlayerConnection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
@@ -32,7 +33,11 @@ data class Lyrics(val synced: List<LyricLine>, val plain: String?)
 class NowPlayingViewModel @Inject constructor(
     val player: PlayerConnection,
     private val library: LibraryRepository,
+    private val playbackSettings: PlaybackSettings,
 ) : ViewModel() {
+    /** Read when the screen opens, so a change in Settings applies the next time Now Playing is shown. */
+    val gesturesEnabled: Boolean get() = playbackSettings.screenGestures
+
     val state = player.state
 
     private val currentPath = player.state.map { it.libraryPath }.distinctUntilChanged()

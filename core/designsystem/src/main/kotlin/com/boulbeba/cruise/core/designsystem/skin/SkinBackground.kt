@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.ImageShader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.asImageBitmap
 import com.boulbeba.cruise.core.designsystem.theme.BackgroundStyle
@@ -69,6 +70,7 @@ fun SkinBackground(modifier: Modifier = Modifier, coverAccent: Color? = null, co
             BackgroundStyle.Carbon -> carbonDash(t, carbon, colors.accent)
             BackgroundStyle.WarmGrain -> warmGrain(t, grain, colors.accent, colors.accent2)
             BackgroundStyle.Aurora -> aurora(t, colors.accent, colors.accent2)
+            BackgroundStyle.Stripes -> stripes(t, colors.accent, colors.accent2)
             BackgroundStyle.Plain -> if (!colors.isDark) {
                 drawRect(Brush.verticalGradient(listOf(colors.accent.copy(alpha = 0.06f), Color.Transparent)))
             }
@@ -155,6 +157,21 @@ private fun DrawScope.aurora(t: Float, mint: Color, violet: Color) {
         drawCircle(Brush.radialGradient(listOf(c.copy(alpha = 0.30f), Color.Transparent), center = Offset(x, y), radius = size.maxDimension * 0.42f), size.maxDimension * 0.42f, Offset(x, y))
     }
     drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.35f))))
+}
+
+/** Tape Deck: four 80s stripes rising out of the lower-right corner (clear of the navigation), a warm vignette. */
+private fun DrawScope.stripes(t: Float, orange: Color, teal: Color) {
+    val bands = listOf(Color(0xFFFFC145), orange, Color(0xFFE8503A), teal)
+    val w = size.height * 0.045f
+    val drift = (sin(t * 0.25f) + 1f) / 2f * size.height * 0.03f
+    rotate(-22f, pivot = Offset(size.width, size.height)) {
+        bands.forEachIndexed { i, c ->
+            val y = size.height * 0.90f + i * w * 1.2f + drift
+            drawRect(c.copy(alpha = 0.80f), Offset(size.width * 0.62f, y), Size(size.width * 0.6f, w))
+        }
+    }
+    drawRect(Brush.radialGradient(listOf(orange.copy(alpha = 0.10f), Color.Transparent), center = Offset(size.width * 0.3f, size.height * 0.4f), radius = size.maxDimension * 0.6f))
+    drawRect(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.25f), Color.Transparent, Color.Black.copy(alpha = 0.30f))))
 }
 
 private fun carbonTile(): ImageBitmap {

@@ -33,6 +33,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -169,14 +171,40 @@ private fun MiniCover(skin: Skin) {
                 drawRoundRect(art, Offset(10f, 10f), Size(size.width - 20f, size.height - 20f), CornerRadius(radius.toPx()), alpha = 0.8f)
             }
             CoverStyle.Minimal -> drawRoundRect(art, Offset(12f, 12f), Size(size.width - 24f, size.height - 24f), CornerRadius(radius.toPx() * 0.6f))
-            CoverStyle.Rounded -> {
-                for (i in 0 until 36) {
-                    val a = i / 36f * 6.283f
-                    val len = 6f + 6f * abs(sin(i * 0.9f))
-                    val r0 = size.minDimension * 0.44f
-                    drawLine(c.accent, Offset(center.x + kotlin.math.cos(a) * r0, center.y + sin(a) * r0), Offset(center.x + kotlin.math.cos(a) * (r0 + len), center.y + sin(a) * (r0 + len)), 3f)
+            CoverStyle.Sleeve -> {
+                val w = size.width
+                drawCircle(Color(0xFF0E0E12), w * 0.34f, Offset(w * 0.62f, center.y))
+                drawCircle(art, w * 0.12f, Offset(w * 0.62f, center.y))
+                drawRoundRect(art, Offset(w * 0.04f, w * 0.17f), Size(w * 0.66f, w * 0.66f), CornerRadius(w * 0.04f))
+                drawRoundRect(Color.White.copy(alpha = 0.4f), Offset(w * 0.04f, w * 0.17f), Size(w * 0.66f, w * 0.66f), CornerRadius(w * 0.04f), style = Stroke(2f))
+            }
+            CoverStyle.Liquid -> {
+                val p = Path()
+                for (i in 0..40) {
+                    val a = i / 40f * 6.283f
+                    val r = size.minDimension * (0.40f + 0.05f * sin(a * 3f) + 0.03f * kotlin.math.cos(a * 5f))
+                    val pt = Offset(center.x + kotlin.math.cos(a) * r, center.y + sin(a) * r)
+                    if (i == 0) p.moveTo(pt.x, pt.y) else p.lineTo(pt.x, pt.y)
                 }
-                drawRoundRect(art, Offset(size.width * 0.12f, size.height * 0.12f), Size(size.width * 0.76f, size.height * 0.76f), CornerRadius(radius.toPx()))
+                p.close()
+                drawPath(p, art)
+                drawPath(p, Brush.sweepGradient(listOf(c.accent, c.accent2, c.accent)), style = Stroke(3f))
+            }
+            CoverStyle.Sticker -> rotate(-6f) {
+                drawRoundRect(Color.Black.copy(alpha = 0.12f), Offset(10f, 14f), Size(size.width - 16f, size.height - 16f), CornerRadius(radius.toPx()))
+                drawRoundRect(Color.White, Offset(6f, 6f), Size(size.width - 16f, size.height - 16f), CornerRadius(radius.toPx()))
+                drawRoundRect(art, Offset(12f, 12f), Size(size.width - 28f, size.height - 28f), CornerRadius(radius.toPx() * 0.7f))
+            }
+            CoverStyle.Cassette -> {
+                val w = size.width
+                val h = w * 0.64f
+                val top = (size.height - h) / 2
+                drawRoundRect(Color(0xFF2B2722), Offset(0f, top), Size(w, h), CornerRadius(w * 0.05f))
+                drawRoundRect(Color(0xFFF3E9D6), Offset(w * 0.07f, top + h * 0.09f), Size(w * 0.86f, h * 0.56f), CornerRadius(w * 0.03f))
+                drawRoundRect(art, Offset(w * 0.09f, top + h * 0.12f), Size(h * 0.48f, h * 0.48f), CornerRadius(w * 0.02f))
+                drawRoundRect(Color(0xFF0D0B09), Offset(w * 0.30f, top + h * 0.36f), Size(w * 0.50f, h * 0.22f), CornerRadius(h * 0.08f))
+                drawCircle(Color(0xFFEDE6DA), w * 0.045f, Offset(w * 0.42f, top + h * 0.47f))
+                drawCircle(Color(0xFFEDE6DA), w * 0.045f, Offset(w * 0.68f, top + h * 0.47f))
             }
         }
     }

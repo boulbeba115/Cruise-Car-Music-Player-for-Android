@@ -42,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.boulbeba.cruise.core.car.steering.KeyAction
 import com.boulbeba.cruise.core.car.steering.PressType
 import com.boulbeba.cruise.core.car.steering.VendorScreenSuppressor
+import com.boulbeba.cruise.core.car.tw.TwDefaultApps
 import com.boulbeba.cruise.core.car.tw.TwProtocol
 import com.boulbeba.cruise.core.designsystem.component.CruisePill
 import com.boulbeba.cruise.core.designsystem.icon.CruiseIcons
@@ -82,6 +83,39 @@ fun SteeringScreen(modifier: Modifier = Modifier, viewModel: SteeringViewModel =
                     Switch(checked = viewModel.mapping.smartCallButton.also { version }, onCheckedChange = viewModel::setSmartCall)
                 }
                 Text(stringResource(R.string.sw_smart_call_hint), style = CruiseTheme.typography.meta, color = CruiseTheme.colors.textSecondary)
+                Spacer(Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.sw_own_phone), style = CruiseTheme.typography.body, color = CruiseTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+                    Switch(checked = viewModel.mapping.ownPhoneButton.also { version }, onCheckedChange = viewModel::setOwnPhoneButton)
+                }
+                Text(stringResource(R.string.sw_own_phone_hint), style = CruiseTheme.typography.meta, color = CruiseTheme.colors.textSecondary)
+                if (viewModel.headUnit.isTwUnit) {
+                    Spacer(Modifier.height(12.dp))
+                    var musicApp by remember { mutableStateOf(TwDefaultApps.musicApp()) }
+                    var musicResult by remember { mutableStateOf<Boolean?>(null) }
+                    StatusLine(R.string.sw_status_music_key, musicApp ?: stringResource(R.string.sw_music_key_stock))
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        if (musicApp != context.packageName) {
+                            CruisePill(stringResource(R.string.sw_music_key_set), onClick = {
+                                musicResult = TwDefaultApps.makeCruiseMusicApp(context)
+                                musicApp = TwDefaultApps.musicApp()
+                            }, icon = CruiseIcons.Library)
+                        } else {
+                            CruisePill(stringResource(R.string.sw_music_key_restore), onClick = {
+                                TwDefaultApps.restore(context)
+                                musicApp = TwDefaultApps.musicApp()
+                            }, icon = CruiseIcons.Back)
+                        }
+                        TwDefaultApps.steeringLearningIntent(context)?.let { learn ->
+                            CruisePill(stringResource(R.string.sw_learn_buttons), onClick = { runCatching { context.startActivity(learn) } }, icon = CruiseIcons.Car)
+                        }
+                    }
+                    if (musicResult == false) {
+                        Spacer(Modifier.height(6.dp))
+                        Text(stringResource(R.string.sw_music_key_failed), style = CruiseTheme.typography.meta, color = CruiseTheme.colors.warning)
+                    }
+                }
                 if (!helperEnabled) {
                     Spacer(Modifier.height(12.dp))
                     Text(stringResource(R.string.sw_helper_hint), style = CruiseTheme.typography.meta, color = CruiseTheme.colors.textSecondary)
@@ -197,6 +231,7 @@ private fun actionLabel(action: KeyAction): String = stringResource(
         KeyAction.ToggleShuffle -> R.string.sw_action_shuffle
         KeyAction.CycleRepeat -> R.string.sw_action_repeat
         KeyAction.OpenCruise -> R.string.sw_action_open
+        KeyAction.Voice -> R.string.sw_action_voice
         KeyAction.Nothing -> R.string.sw_action_nothing
     },
 )

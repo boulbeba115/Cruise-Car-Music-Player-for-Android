@@ -68,4 +68,5 @@
     <string name="pl_move_up">Move up</string>
     <string name="pl_move_down">Move down</string>
     <string name="pl_queue_name">Drive %1$s</string>
+    <string name="search_voice">Search by voice</string>
 </resources>

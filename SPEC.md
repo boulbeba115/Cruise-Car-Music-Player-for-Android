@@ -491,13 +491,14 @@ live miniature of each; a second skin can follow the headlights (zlink `OUT_DARK
 
 | Skin | Type | Cover | Music bar | Backdrop |
 |---|---|---|---|---|
-| Midnight (default) | Manrope | Rounded, spectrum bars along its edges | Waveform dancing with the music | Glow tinted by the cover |
+| Midnight (default) | Manrope | Record sleeve with holographic foil; the disc slides out and spins while playing | Waveform dancing with the music | Glow tinted by the cover |
 | Neon Drive | Audiowide / Orbitron, caps | Neon tube frame pulsing on the beat | Glowing oscilloscope wave | Synthwave horizon grid, scrolling |
 | Amber Cockpit | Share Tech Mono, caps | Tachometer: progress arc, music-driven needle | LED segment meter with red zone | Carbon weave, amber sweep |
 | Vinyl Lounge | Playfair Display | Spinning record (33⅓ rpm), tonearm swings in/out | Groove line with stylus | Warm wood grain |
-| Aurora | Space Grotesk, very round | Rounded, spectrum bars | Waveform | Moving northern lights |
+| Aurora | Space Grotesk, very round | Liquid blob whose edge ripples with the spectrum, gooey colour blobs behind | Waveform | Moving northern lights |
+| Tape Deck | Space Grotesk / Manrope | Cassette: art as the label, tape winds reel to reel with the song, reels speed up as they empty | Waveform | 80s stripes, lower-right corner |
 | OLED Pure | Manrope ExtraBold, big type | Minimal square | Hairline with breathing playhead | Pure black (lightest on the CPU) |
-| Daylight | Manrope | Rounded, spectrum bars | Waveform | Plain light |
+| Daylight | Manrope | Die-cut sticker: 3D tilt, foil sweep, corner that peels up on the beat | Waveform | Plain light |
 
 Every skin passes WCAG AAA (7:1) for primary text on background, surface and elevated surface, 4.5:1 for
 secondary text and on-accent (unit test `SkinContrastTest`). Fonts are bundled as static weight instances
@@ -812,6 +813,34 @@ transitions, Baseline Profiles.
 
 Needs the car to confirm: TW steering keys and call answering, headlight broadcasts, sleep/wake timing, real
 library scan speed on the owner's USB stick.
+
+### Version 1.1.0 (2026-10-23)
+
+- **Covers as objects** (owner's feedback: the square cover with dashes looked flat): sleeve, liquid, sticker and
+  cassette styles; new **Tape Deck** skin (8 skins). Canvas-only drawing, motion stops on pause.
+- **Now Playing gestures** without an overlay (on by default, Settings → Library & playback): hold anywhere ½ s =
+  play/pause (a ring fills under the finger), hold + slide = scrub with a time bubble, swipe left/right = next /
+  previous, swipe up/down = volume. Ordinary taps are never intercepted; controls that handle a touch themselves
+  (seek bar, lyrics, queue) keep it.
+- **Steering wheel owned by Cruise** on TW units: the unit's key service (com.tw.service) opens its Bluetooth screen
+  for the phone button unless a HiCar phone is "connected"; Cruise sets that hand-over flag (`action.hicar.onconnect`,
+  renewed on every screen-on), so the phone button only does what Cruise maps it to — calls are still answered. The
+  mixer button cannot be released that way: the accessibility helper closes the EQ screen, or the button is re-learned
+  in the unit's own Steering Wheel app (com.tw.keypad), which Settings → Steering wheel now opens. New wheel action
+  **Voice command**; the wheel's VOICE function (code 90) uses it by default.
+- **Default music app**: the unit's MUSIC key opens the app named in `/data/tw/music_name`; Settings → Steering wheel
+  can point it at Cruise (SELinux is permissive on the reference unit; whether the file is writable is checked on the
+  unit). Android-side, Cruise answers `MUSIC_PLAYER`, `APP_MUSIC`, audio files from file managers (`VIEW audio/*`) and
+  assistants' `MEDIA_PLAY_FROM_SEARCH`.
+- **Offline voice commands** (feature/voice): Vosk small models for English and French (~40 MB each, from
+  `Cruise/voice/` on the stick, installed once). "Play / joue …", "the album …", "… by …", "shuffle …", favourites,
+  next / previous / pause / resume, louder / quieter. Transcripts are matched to the library by sound (phonetic key +
+  edit distance + partial windows), tested against real recogniser output — e.g. "plain a while else off by" finds
+  Nawal Al Zoughbi, "je vous fais russe" finds Fairuz. Music ducks while listening; the model is released after
+  5 idle minutes. Arabic speech is not supported (no small Arabic model exists).
+
+Needs the car: the HiCar hand-over on the real service, writing `/data/tw/music_name`, the microphone path on the unit
+(zlink uses one), model load time on the Cortex-A7.
 
 ### After v1.0 (P2/P3 backlog)
 

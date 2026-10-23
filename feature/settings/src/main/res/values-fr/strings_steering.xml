@@ -32,4 +32,13 @@
     <string name="sw_action_repeat">Mode répétition</string>
     <string name="sw_action_open">Ouvrir Cruise</string>
     <string name="sw_action_nothing">Rien</string>
+    <string name="sw_own_phone">Cruise gère le bouton téléphone</string>
+    <string name="sw_own_phone_hint">L\'autoradio n\'ouvre plus son écran Bluetooth quand vous l\'appuyez ; les appels sont toujours décrochés. Tant que c\'est activé, ouvrir l\'appli Bluetooth n\'active plus le Bluetooth tout seul.</string>
+    <string name="sw_status_music_key">La touche Musique ouvre</string>
+    <string name="sw_music_key_stock">le lecteur d\'origine</string>
+    <string name="sw_music_key_set">Faire de Cruise l\'appli musique</string>
+    <string name="sw_music_key_restore">Rendre la touche Musique</string>
+    <string name="sw_learn_buttons">Réapprendre les boutons du volant</string>
+    <string name="sw_music_key_failed">Cet autoradio ne laisse pas les applis changer sa touche Musique. Réapprenez plutôt un bouton du volant comme PLAY/PAUSE ou MUSIC dans l\'appli Volant de l\'autoradio.</string>
+    <string name="sw_action_voice">Commande vocale</string>
 </resources>

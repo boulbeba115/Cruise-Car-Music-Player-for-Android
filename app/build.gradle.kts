@@ -10,8 +10,8 @@ android {
 
     defaultConfig {
         applicationId = "com.boulbeba.cruise"
-        versionCode = 5
-        versionName = "1.0.0"
+        versionCode = 6
+        versionName = "1.1.0"
     }
 
     buildTypes {
@@ -48,6 +48,7 @@ dependencies {
     implementation(projects.feature.nowplaying)
     implementation(projects.feature.library)
     implementation(projects.feature.sound)
+    implementation(projects.feature.voice)
     implementation(projects.core.data)
     implementation(projects.core.ui)
     implementation(projects.core.playback)
@@ -56,6 +57,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.profileinstaller)
 
     testImplementation(libs.junit)

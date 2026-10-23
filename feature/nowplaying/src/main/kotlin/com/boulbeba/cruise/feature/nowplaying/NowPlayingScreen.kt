@@ -1,5 +1,7 @@
 package com.boulbeba.cruise.feature.nowplaying
 
+import android.media.AudioManager
+import android.os.SystemClock
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -13,7 +15,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,7 +35,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -44,8 +44,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,9 +64,9 @@ import com.boulbeba.cruise.core.designsystem.theme.CoverStyle
 import com.boulbeba.cruise.core.designsystem.theme.CruiseTheme
 import com.boulbeba.cruise.core.playback.PlayerConnection
 import com.boulbeba.cruise.core.playback.PlayerUiState
+import com.boulbeba.cruise.core.ui.VoiceRequests
 import com.boulbeba.cruise.core.ui.qualityLabel
 import java.util.Locale
-import kotlin.math.abs
 
 /** The current cover, decoded once by the app shell and shared with the backdrop and Now Playing. */
 val LocalCoverArt = compositionLocalOf<DecodedArtwork?> { null }
@@ -99,9 +100,24 @@ fun NowPlayingScreen(
 
     var panel by rememberSaveable { mutableStateOf(Panel.None) }
     var blind by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+    val cues = remember { GestureCues() }
+    val gestures = remember(player) {
+        GestureActions(
+            isPlaying = { player.state.value.isPlaying },
+            positionMs = { player.state.value.positionAt(SystemClock.elapsedRealtime()) },
+            durationMs = { player.state.value.durationMs },
+            playPause = player::playPause, next = player::next, previous = player::previous, seekTo = player::seekTo,
+            audio = context.getSystemService(AudioManager::class.java),
+        )
+    }
+    val gesturesOn = remember { viewModel.gesturesEnabled }
     if (panel == Panel.Lyrics && lyrics == null) panel = Panel.None
 
-    BoxWithConstraints(modifier.fillMaxSize()) {
+    BoxWithConstraints(
+        modifier.fillMaxSize().nowPlayingGestures(gesturesOn && state.hasMedia && panel == Panel.None && !blind, cues, gestures, haptics),
+    ) {
         val maxW = maxWidth
         val maxH = maxHeight
         if (!state.hasMedia) {
@@ -119,7 +135,7 @@ fun NowPlayingScreen(
                 if (showLyrics && l != null) {
                     LyricsPanel(l, state, audio, accent, onSeek = player::seekTo, modifier = Modifier.size(size))
                 } else {
-                    SwipeableCover(state, art, audio, accent, accent2, size, onSwipe = { if (it > 0) player.previous() else player.next() })
+                    AnimatedCover(state, art, audio, accent, accent2, size)
                 }
             }
         }
@@ -168,27 +184,18 @@ fun NowPlayingScreen(
         AnimatedVisibility(panel == Panel.Info, enter = fadeIn() + scaleIn(initialScale = 0.94f), exit = fadeOut() + scaleOut(targetScale = 0.94f), modifier = Modifier.align(Alignment.Center)) {
             TrackInfoPanel(track, state, stat?.playCount ?: 0, onClose = { panel = Panel.None }, modifier = Modifier.widthIn(max = 640.dp).padding(24.dp))
         }
+        GestureCueLayer(cues, accent)
         if (blind) BlindMode(state, player, onExit = { blind = false })
     }
 }
 
 @Composable
-private fun SwipeableCover(state: PlayerUiState, art: DecodedArtwork, audio: AudioLevels, accent: Color, accent2: Color, size: Dp, onSwipe: (Float) -> Unit) {
-    var drag by remember { mutableFloatStateOf(0f) }
+private fun AnimatedCover(state: PlayerUiState, art: DecodedArtwork, audio: AudioLevels, accent: Color, accent2: Color, size: Dp) {
     // Keyed on the decoded cover: the new art scales in over the old one once it is ready.
     AnimatedContent(
         targetState = art.image,
         transitionSpec = { (fadeIn(tween(320)) + scaleIn(tween(360), initialScale = 0.92f)) togetherWith fadeOut(tween(180)) },
         label = "cover",
-        modifier = Modifier.pointerInput(Unit) {
-            detectHorizontalDragGestures(
-                onDragEnd = {
-                    if (abs(drag) > 80.dp.toPx()) onSwipe(drag)
-                    drag = 0f
-                },
-                onHorizontalDrag = { _, amount -> drag += amount },
-            )
-        },
     ) { image ->
         SkinCover(state, image, audio, accent, accent2, size)
     }
@@ -276,6 +283,7 @@ private fun TrackPanel(
             }
             CruiseIconButton(CruiseIcons.Playlist, stringResource(R.string.np_queue_open), onClick = { onPanel(Panel.Queue) }, size = small, tint = colors.textSecondary)
             CruiseIconButton(CruiseIcons.Info, stringResource(R.string.np_info), onClick = { onPanel(Panel.Info) }, size = small, tint = colors.textSecondary)
+            CruiseIconButton(CruiseIcons.Mic, stringResource(R.string.np_voice), onClick = VoiceRequests::requestListen, size = small, tint = colors.textSecondary)
             CruiseIconButton(CruiseIcons.Gesture, stringResource(R.string.np_blind), onClick = onBlind, size = small, tint = colors.textSecondary)
         }
     }

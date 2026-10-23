@@ -29,4 +29,5 @@
     <string name="np_blind">Blind mode</string>
     <string name="np_blind_hint">Tap: play / pause · Swipe ← →: track · Swipe ↑ ↓: volume</string>
     <string name="np_blind_exit">Exit</string>
+    <string name="np_voice">Voice command</string>
 </resources>

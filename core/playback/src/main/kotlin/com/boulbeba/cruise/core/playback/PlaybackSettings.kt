@@ -25,6 +25,11 @@ class PlaybackSettings @Inject constructor(@ApplicationContext context: Context)
         get() = prefs.getBoolean("resume_on_boot", true)
         set(value) = prefs.edit().putBoolean("resume_on_boot", value).apply()
 
+    /** Whole-screen gestures on Now Playing: hold = play/pause, swipes = tracks and volume. */
+    var screenGestures: Boolean
+        get() = prefs.getBoolean("screen_gestures", true)
+        set(value) = prefs.edit().putBoolean("screen_gestures", value).apply()
+
     internal var lastBootResumed: Long
         get() = prefs.getLong("last_boot_resumed", 0)
         set(value) = prefs.edit().putLong("last_boot_resumed", value).apply()

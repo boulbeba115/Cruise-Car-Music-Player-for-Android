@@ -108,6 +108,7 @@ class SkinsScreenshotTest {
     private fun skin(id: String) {
         Appearance.setSkin(id)
         play()
+        settle(2_500) // let the record slide out, the sticker tilt, the tape start
         capture("20_skin_$id")
     }
 
@@ -118,6 +119,7 @@ class SkinsScreenshotTest {
     @Test fun skin_aurora() = skin("aurora")
     @Test fun skin_oled() = skin("oled")
     @Test fun skin_daylight() = skin("daylight")
+    @Test fun skin_tape() = skin("tape")
 
     @Test fun settings_appearance() {
         waitForText("Ready when you are")

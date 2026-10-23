@@ -32,4 +32,13 @@
     <string name="sw_action_repeat">Repeat mode</string>
     <string name="sw_action_open">Open Cruise</string>
     <string name="sw_action_nothing">Nothing</string>
+    <string name="sw_own_phone">Cruise owns the phone button</string>
+    <string name="sw_own_phone_hint">The unit stops opening its Bluetooth screen when you press it; calls are still answered. While this is on, opening the Bluetooth app no longer turns Bluetooth on by itself.</string>
+    <string name="sw_status_music_key">Music key opens</string>
+    <string name="sw_music_key_stock">the stock player</string>
+    <string name="sw_music_key_set">Make Cruise the music app</string>
+    <string name="sw_music_key_restore">Give the music key back</string>
+    <string name="sw_learn_buttons">Re-learn wheel buttons</string>
+    <string name="sw_music_key_failed">This unit does not let apps change its music key. Re-learn a wheel button as PLAY/PAUSE or MUSIC in the unit\'s Steering Wheel app instead.</string>
+    <string name="sw_action_voice">Voice command</string>
 </resources>

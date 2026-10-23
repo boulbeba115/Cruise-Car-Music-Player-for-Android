@@ -1,5 +1,9 @@
 package com.boulbeba.cruise.core.car
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
@@ -14,6 +18,7 @@ import com.boulbeba.cruise.core.car.steering.RawKey
 import com.boulbeba.cruise.core.car.steering.VendorScreenSuppressor
 import com.boulbeba.cruise.core.car.tw.TwProtocol
 import com.boulbeba.cruise.core.car.tw.TwUtilBridge
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,9 +33,13 @@ import kotlinx.coroutines.flow.update
  */
 @Singleton
 class HeadUnitManager @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val mapping: KeyMappingStore,
     private val calls: CallControl,
 ) {
+    private var phoneClaimed = false
+    private var screenReceiver: BroadcastReceiver? = null
+
     private var bridge: TwUtilBridge? = null
     private val handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) = onMessage(msg)
@@ -65,10 +74,36 @@ class HeadUnitManager @Inject constructor(
         b.addHandler(HANDLER_NAME, handler)
         bridge = b
         CarLog.log("tw", "connected to the MCU")
+        claimPhoneButton()
+        // The vendor service forgets the hand-over when it restarts; renew it whenever the screen comes back.
+        screenReceiver = object : BroadcastReceiver() {
+            override fun onReceive(c: Context, intent: Intent) = claimPhoneButton()
+        }.also { context.registerReceiver(it, IntentFilter(Intent.ACTION_SCREEN_ON)) }
+    }
+
+    /**
+     * The unit's key service (com.tw.service) opens its Bluetooth screen for the phone button unless a HiCar phone is
+     * "connected" — a flag set by the unprotected broadcast `action.hicar.onconnect` and used for nothing else there
+     * (the Bluetooth app only stops auto-enabling Bluetooth while it is set). Calls are still answered by the unit.
+     */
+    fun claimPhoneButton() {
+        if (!TwUtilBridge.isAvailable) return
+        val own = mapping.ownPhoneButton
+        if (own) {
+            context.sendBroadcast(Intent(HICAR_CONNECTED))
+            phoneClaimed = true
+            CarLog.log("tw", "phone button claimed")
+        } else if (phoneClaimed) {
+            context.sendBroadcast(Intent(HICAR_DISCONNECTED))
+            phoneClaimed = false
+            CarLog.log("tw", "phone button released")
+        }
     }
 
     @Synchronized
     fun stop() {
+        screenReceiver?.let { runCatching { context.unregisterReceiver(it) } }
+        screenReceiver = null
         bridge?.run {
             removeHandler(HANDLER_NAME)
             stop()
@@ -138,6 +173,7 @@ class HeadUnitManager @Inject constructor(
             KeyAction.ToggleShuffle -> target?.toggleShuffle()
             KeyAction.CycleRepeat -> target?.cycleRepeat()
             KeyAction.OpenCruise -> target?.openApp()
+            KeyAction.Voice -> target?.voice()
             KeyAction.Nothing, KeyAction.UnitDefault -> Unit
         }
     }
@@ -149,6 +185,8 @@ class HeadUnitManager @Inject constructor(
     }
 
     private companion object {
+        const val HICAR_CONNECTED = "action.hicar.onconnect"
+        const val HICAR_DISCONNECTED = "action.hicar.ondisconnect"
         const val HANDLER_NAME = "CruiseHeadUnit"
         const val DEBOUNCE_MS = 250L
     }

@@ -29,4 +29,5 @@
     <string name="np_blind">Mode aveugle</string>
     <string name="np_blind_hint">Toucher : lecture / pause · Glisser ← → : piste · Glisser ↑ ↓ : volume</string>
     <string name="np_blind_exit">Quitter</string>
+    <string name="np_voice">Commande vocale</string>
 </resources>

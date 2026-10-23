@@ -26,4 +26,9 @@ class SteeringViewModel @Inject constructor(
     fun setSmartCall(enabled: Boolean) {
         mapping.smartCallButton = enabled
     }
+
+    fun setOwnPhoneButton(enabled: Boolean) {
+        mapping.ownPhoneButton = enabled
+        headUnit.claimPhoneButton()
+    }
 }

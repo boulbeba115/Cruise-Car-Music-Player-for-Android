@@ -9,10 +9,20 @@ import androidx.compose.ui.text.font.FontWeight
 import com.boulbeba.cruise.core.designsystem.R
 
 /** How the cover is presented on Now Playing. */
-enum class CoverStyle { Rounded, Vinyl, Neon, Gauge, Minimal }
+enum class CoverStyle {
+    /** Record sleeve with holographic foil; the disc slides out and spins while playing. */
+    Sleeve,
+    /** The cover inside a living blob whose edge ripples with the spectrum. */
+    Liquid,
+    /** White die-cut sticker that tilts in 3D, foil sweep and a peel corner. */
+    Sticker,
+    /** Cassette: the art is the label, tape moves from reel to reel with the song. */
+    Cassette,
+    Vinyl, Neon, Gauge, Minimal,
+}
 
 /** The animated backdrop behind every screen. */
-enum class BackgroundStyle { CoverGlow, RetroGrid, Carbon, WarmGrain, Aurora, Plain }
+enum class BackgroundStyle { CoverGlow, RetroGrid, Carbon, WarmGrain, Aurora, Stripes, Plain }
 
 /** The animated music (progress) bar. */
 enum class BarStyle { Waveform, NeonWave, LedSegments, Groove, Hairline }
@@ -37,7 +47,7 @@ data class Skin(
     /** Multiplies every corner radius: 0 = square, 1 = default, 1.5 = very round. */
     val corners: Float = 1f,
     val roundButtons: Boolean = true,
-    val cover: CoverStyle = CoverStyle.Rounded,
+    val cover: CoverStyle = CoverStyle.Sleeve,
     val background: BackgroundStyle = BackgroundStyle.CoverGlow,
     val bar: BarStyle = BarStyle.Waveform,
     val nav: NavStyle = NavStyle.Pill,
@@ -64,7 +74,7 @@ object Skins {
     val Midnight = Skin(
         id = "midnight", name = R.string.skin_midnight, tagline = R.string.skin_midnight_tagline,
         colors = MidnightColors, display = manrope, body = manrope,
-        cover = CoverStyle.Rounded, background = BackgroundStyle.CoverGlow, bar = BarStyle.Waveform, nav = NavStyle.Pill,
+        cover = CoverStyle.Sleeve, background = BackgroundStyle.CoverGlow, bar = BarStyle.Waveform, nav = NavStyle.Pill,
         dynamicAccent = true,
     )
     val NeonDrive = Skin(
@@ -87,7 +97,7 @@ object Skins {
     val Aurora = Skin(
         id = "aurora", name = R.string.skin_aurora, tagline = R.string.skin_aurora_tagline,
         colors = AuroraColors, display = spaceGrotesk, body = spaceGrotesk, corners = 1.5f,
-        cover = CoverStyle.Rounded, background = BackgroundStyle.Aurora, bar = BarStyle.Waveform, nav = NavStyle.Pill,
+        cover = CoverStyle.Liquid, background = BackgroundStyle.Aurora, bar = BarStyle.Waveform, nav = NavStyle.Pill,
     )
     val OledPure = Skin(
         id = "oled", name = R.string.skin_oled, tagline = R.string.skin_oled_tagline,
@@ -97,10 +107,16 @@ object Skins {
     val Daylight = Skin(
         id = "daylight", name = R.string.skin_daylight, tagline = R.string.skin_daylight_tagline,
         colors = DaylightColors, display = manrope, body = manrope,
-        cover = CoverStyle.Rounded, background = BackgroundStyle.Plain, bar = BarStyle.Waveform, nav = NavStyle.Pill,
+        cover = CoverStyle.Sticker, background = BackgroundStyle.Plain, bar = BarStyle.Waveform, nav = NavStyle.Pill,
     )
 
-    val all: List<Skin> = listOf(Midnight, NeonDrive, AmberCockpit, VinylLounge, Aurora, OledPure, Daylight)
+    val TapeDeck = Skin(
+        id = "tape", name = R.string.skin_tape, tagline = R.string.skin_tape_tagline,
+        colors = TapeColors, display = spaceGrotesk, body = manrope, corners = 0.8f,
+        cover = CoverStyle.Cassette, background = BackgroundStyle.Stripes, bar = BarStyle.Waveform, nav = NavStyle.Block,
+    )
+
+    val all: List<Skin> = listOf(Midnight, NeonDrive, AmberCockpit, VinylLounge, TapeDeck, Aurora, OledPure, Daylight)
 
     fun byId(id: String?): Skin = all.firstOrNull { it.id == id } ?: Midnight
 }

@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -34,6 +35,16 @@ import com.boulbeba.cruise.core.designsystem.component.NavItem
 import com.boulbeba.cruise.core.designsystem.skin.SkinBackground
 import com.boulbeba.cruise.core.designsystem.theme.CruiseTheme
 import com.boulbeba.cruise.core.ui.NavRequests
+import com.boulbeba.cruise.core.ui.PlayRequests
+import com.boulbeba.cruise.core.ui.VoiceRequests
+import com.boulbeba.cruise.feature.voice.VoiceOverlay
+import com.boulbeba.cruise.feature.voice.VoiceViewModel
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.boulbeba.cruise.feature.library.LibraryScreen
 import com.boulbeba.cruise.feature.library.PlaylistsScreen
 import com.boulbeba.cruise.feature.library.SearchScreen
@@ -51,6 +62,32 @@ fun CruiseApp(player: PlayerConnection) {
     val playback by player.state.collectAsStateWithLifecycle()
     // One decode of the current cover feeds the backdrop, Now Playing and the mini player.
     val art = rememberArtwork(playback.artwork, playback.artworkKey, playback.path, with(LocalDensity.current) { 480.dp.roundToPx() })
+
+    // Voice: the overlay sits above every screen; requests come from the wheel, mic buttons and other apps.
+    val voice: VoiceViewModel = hiltViewModel()
+    val voiceUi by voice.ui.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val micPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) voice.toggle()
+    }
+    val listen = {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) voice.toggle()
+        else micPermission.launch(Manifest.permission.RECORD_AUDIO)
+    }
+    val listenCount by VoiceRequests.listen.collectAsStateWithLifecycle()
+    LaunchedEffect(listenCount) { if (listenCount > 0) listen() }
+    LaunchedEffect(Unit) {
+        VoiceRequests.query.collect { q -> if (q != null) { VoiceRequests.query.value = null; voice.run(q) } }
+    }
+    // An audio file opened from a file manager: play it as soon as the player is connected.
+    val pendingFile by PlayRequests.path.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingFile, playback.connected) {
+        val path = pendingFile ?: return@LaunchedEffect
+        if (!playback.connected) return@LaunchedEffect
+        PlayRequests.path.value = null
+        player.play(listOf(java.io.File(path)))
+        destination = TopDestination.NowPlaying
+    }
 
     // "Go to folder / album" from any screen switches destination; the target screen consumes the request.
     LaunchedEffect(Unit) { NavRequests.folder.collect { if (it != null) destination = TopDestination.Folders } }
@@ -94,6 +131,7 @@ fun CruiseApp(player: PlayerConnection) {
             }
         }
     }
+    VoiceOverlay(voiceUi, onCancel = voice::cancel, onRetry = { voice.cancel(); listen() })
     }
     }
 }

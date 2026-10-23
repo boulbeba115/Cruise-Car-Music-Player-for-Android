@@ -135,3 +135,20 @@ val OledColors = CruiseColors(
 )
 
 val LocalCruiseColors = staticCompositionLocalOf { MidnightColors }
+
+/** Tape Deck: an 80s cassette deck — warm black, cream type, orange and teal stripes. */
+val TapeColors = CruiseColors(
+    background = Color(0xFF14120F),
+    surface = Color(0xFF1F1B17),
+    surfaceElevated = Color(0xFF2B2620),
+    accent = Color(0xFFFF8A3D),
+    onAccent = Color(0xFF2A1200),
+    textPrimary = Color(0xFFF6EBD6),
+    textSecondary = Color(0xFFC4B59C),
+    divider = Color(0xFF3A332B),
+    success = Color(0xFF2EC4B6),
+    warning = Color(0xFFFFC145),
+    error = Color(0xFFFF6B6B),
+    isDark = true,
+    accent2 = Color(0xFF2EC4B6),
+)

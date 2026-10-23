@@ -12,3 +12,18 @@ object NavRequests {
     val folder = MutableStateFlow<String?>(null)
     val album = MutableStateFlow<String?>(null)
 }
+
+/** Voice requests from outside the voice overlay: the steering wheel, a mic button, another app's "play …". */
+object VoiceRequests {
+    /** Bumped to start listening (a counter, so the same request twice still triggers). */
+    val listen = MutableStateFlow(0)
+    /** Words that are already known (an assistant's "play …"): no listening needed. */
+    val query = MutableStateFlow<String?>(null)
+
+    fun requestListen() { listen.value++ }
+}
+
+/** An audio file opened from another app, played once the player is connected. */
+object PlayRequests {
+    val path = MutableStateFlow<String?>(null)
+}

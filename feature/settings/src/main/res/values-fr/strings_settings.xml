@@ -41,4 +41,6 @@
     <string name="appearance_perf_full">Complètes</string>
     <string name="appearance_perf_balanced">Équilibrées</string>
     <string name="appearance_perf_saver">Économie</string>
+    <string name="settings_gestures">Gestes sur la lecture en cours</string>
+    <string name="settings_gestures_hint">Maintenir : lecture / pause · maintenir et glisser : avancer · glisser gauche / droite : piste · glisser haut / bas : volume</string>
 </resources>

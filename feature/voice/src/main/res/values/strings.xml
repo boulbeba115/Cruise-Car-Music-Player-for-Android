@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="voice_listening">Listening…</string>
+    <string name="voice_loading">Waking up the voice engine…</string>
+    <string name="voice_installing">Installing the voice pack from the USB stick…</string>
+    <string name="voice_examples">“Play Fairuz” · “Play the album Maloom” · “Next” · “Shuffle my favourites” · “Louder”</string>
+    <string name="voice_did_next">Next track</string>
+    <string name="voice_did_previous">Previous track</string>
+    <string name="voice_did_pause">Paused</string>
+    <string name="voice_did_resume">Playing</string>
+    <string name="voice_did_louder">Louder</string>
+    <string name="voice_did_quieter">Quieter</string>
+    <string name="voice_did_favorites">Your favourites, shuffled</string>
+    <string name="voice_did_shuffle_all">Everything, shuffled</string>
+    <string name="voice_did_artist">Playing %1$s</string>
+    <string name="voice_did_album">Album %1$s</string>
+    <string name="voice_did_track">%1$s</string>
+    <string name="voice_failed_not_found">Nothing called “%1$s” on the stick</string>
+    <string name="voice_failed_heard_nothing">Sorry, I didn’t catch that</string>
+    <string name="voice_failed_engine">The voice engine could not start</string>
+    <string name="voice_failed_no_favorites">No favourites yet</string>
+    <string name="voice_failed_empty_library">The library is empty</string>
+    <string name="voice_no_pack_title">Voice pack needed</string>
+    <string name="voice_no_pack_body">Copy the voice pack folders (vosk-model-small-en-us, vosk-model-small-fr) into Cruise/voice/ on the USB stick, then try again. Cruise installs them once and works fully offline.</string>
+    <string name="voice_retry">Try again</string>
+    <string name="voice_close">Close</string>
+    <string name="voice_permission">Cruise needs the microphone to hear voice commands.</string>
+</resources>

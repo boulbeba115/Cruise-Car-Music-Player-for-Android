@@ -44,7 +44,10 @@ import kotlin.math.sin
 @Composable
 fun SkinCover(state: PlayerUiState, image: ImageBitmap?, audio: AudioLevels, accent: Color, accent2: Color, size: Dp, modifier: Modifier = Modifier) {
     when (CruiseTheme.skin.cover) {
-        CoverStyle.Rounded -> RingCover(state, image, audio, accent, accent2, size, modifier)
+        CoverStyle.Sleeve -> SleeveCover(state, image, audio, accent, accent2, size, modifier)
+        CoverStyle.Liquid -> LiquidCover(state, image, audio, accent, accent2, size, modifier)
+        CoverStyle.Sticker -> StickerCover(state, image, audio, accent, size, modifier)
+        CoverStyle.Cassette -> CassetteCover(state, image, audio, accent, accent2, size, modifier)
         CoverStyle.Vinyl -> VinylCover(state, image, audio, size, modifier)
         CoverStyle.Neon -> NeonCover(state, image, audio, accent, accent2, size, modifier)
         CoverStyle.Gauge -> GaugeCover(state, image, audio, accent, accent2, size, modifier)
@@ -58,50 +61,11 @@ private fun Art(image: ImageBitmap?, state: PlayerUiState) {
     else GeneratedCover(state.album.ifBlank { state.path ?: "" }, state.album.ifBlank { state.title })
 }
 
-/** Rounded cover framed by spectrum bars along its edges that breathe with the music (SPEC VIS-4). */
-@Composable
-private fun RingCover(state: PlayerUiState, image: ImageBitmap?, audio: AudioLevels, accent: Color, accent2: Color, size: Dp, modifier: Modifier) {
-    val reactive = CruiseTheme.quality != VisualQuality.Saver
-    Box(modifier.size(size), contentAlignment = Alignment.Center) {
-        if (reactive) Canvas(Modifier.fillMaxSize()) {
-            audio.frame
-            val perSide = 16
-            val half = this.size.minDimension * 0.41f
-            val gap = this.size.minDimension * 0.025f
-            for (side in 0 until 4) for (k in 0 until perSide) {
-                val u = (k + 0.5f) / perSide * 2f - 1f
-                if (kotlin.math.abs(u) > 0.84f) continue // the rounded corners
-                val i = side * perSide + k
-                val band = audio.bands[(i * 7) % audio.bands.size]
-                val len = this.size.minDimension * (0.012f + 0.045f * band)
-                val (nx, ny) = when (side) { 0 -> 0f to -1f; 1 -> 1f to 0f; 2 -> 0f to 1f; else -> -1f to 0f }
-                val (px, py) = when (side) { 0 -> u * half to -half; 1 -> half to u * half; 2 -> -u * half to half; else -> -half to -u * half }
-                val start = Offset(center.x + px + nx * gap, center.y + py + ny * gap)
-                val end = Offset(start.x + nx * len, start.y + ny * len)
-                drawLine(if (i % 2 == 0) accent else accent2, start, end, strokeWidth = 5f, cap = StrokeCap.Round, alpha = 0.55f + 0.45f * band)
-            }
-        }
-        val scale = 1f + 0.015f * audio.level
-        Box(
-            Modifier.size(size * 0.82f).graphicsLayer { scaleX = scale; scaleY = scale }.clip(RoundedCornerShape(CruiseTheme.dimens.coverRadius)),
-        ) { Art(image, state) }
-    }
-}
-
 /** A record: grooves, the album as the label, a tonearm that lowers while playing; the disc spins at 33⅓ rpm. */
 @Composable
 private fun VinylCover(state: PlayerUiState, image: ImageBitmap?, audio: AudioLevels, size: Dp, modifier: Modifier) {
     val colors = CruiseTheme.colors
-    var angle by remember { mutableFloatStateOf(0f) }
-    val spins = state.isPlaying && CruiseTheme.quality != VisualQuality.Saver
-    LaunchedEffect(spins) {
-        if (!spins) return@LaunchedEffect
-        var last = withFrameNanos { it }
-        while (true) withFrameNanos { now ->
-            angle = (angle + (now - last) / 1e9f * 200f) % 360f // 33⅓ rpm
-            last = now
-        }
-    }
+    val angle = rememberSpin(state.isPlaying && CruiseTheme.quality != VisualQuality.Saver, 200f) // 33⅓ rpm
     Box(modifier.size(size), contentAlignment = Alignment.Center) {
         Box(Modifier.size(size * 0.9f).graphicsLayer { rotationZ = angle }, contentAlignment = Alignment.Center) {
             Canvas(Modifier.fillMaxSize()) {

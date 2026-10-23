@@ -19,6 +19,8 @@ enum class KeyAction {
     ToggleShuffle,
     CycleRepeat,
     OpenCruise,
+    /** Start a voice command ("play …"). */
+    Voice,
     Nothing,
 }
 
@@ -37,6 +39,7 @@ interface MediaCommands {
     fun toggleShuffle()
     fun cycleRepeat()
     fun openApp()
+    fun voice()
 }
 
 /**
@@ -56,6 +59,14 @@ class KeyMappingStore @Inject constructor(@ApplicationContext context: Context) 
     var smartCallButton: Boolean
         get() = prefs.getBoolean("smart_call", true)
         set(value) { prefs.edit().putBoolean("smart_call", value).apply(); _version.value++ }
+
+    /**
+     * Cruise owns the phone button: the unit stops opening its Bluetooth screen for it (calls are still answered).
+     * Done through the unit's own HiCar hand-over flag — see [com.boulbeba.cruise.core.car.HeadUnitManager.claimPhoneButton].
+     */
+    var ownPhoneButton: Boolean
+        get() = prefs.getBoolean("own_phone_button", true)
+        set(value) { prefs.edit().putBoolean("own_phone_button", value).apply(); _version.value++ }
 
     fun actionFor(code: Int, press: PressType): KeyAction {
         val stored = prefs.getString(key(code, press), null)
@@ -85,12 +96,15 @@ class KeyMappingStore @Inject constructor(@ApplicationContext context: Context) 
         const val PHONE_KEY = 24
         const val HANG_UP_KEY = 25
         const val MIXER_KEY = 66
+        /** The wheel's VOICE function (learn it on any button in the unit's Steering Wheel app). */
+        const val VOICE_KEY = 90
 
         private val DEFAULTS: Map<Pair<Int, PressType>, KeyAction> = mapOf(
             (PHONE_KEY to PressType.Short) to KeyAction.PlayPause,
             (PHONE_KEY to PressType.Long) to KeyAction.UnitDefault,
             (MIXER_KEY to PressType.Short) to KeyAction.NextFolder,
             (MIXER_KEY to PressType.Long) to KeyAction.ToggleShuffle,
+            (VOICE_KEY to PressType.Short) to KeyAction.Voice,
         )
 
         fun default(code: Int, press: PressType): KeyAction = DEFAULTS[code to press] ?: KeyAction.UnitDefault

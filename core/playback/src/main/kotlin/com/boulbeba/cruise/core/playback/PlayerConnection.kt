@@ -167,6 +167,9 @@ class PlayerConnection @Inject constructor(@ApplicationContext private val conte
 
     fun next() { controller?.seekToNext() }
 
+    /** Player volume 0…1 (not the system volume): used to duck the music while listening to a voice command. */
+    fun setPlayerVolume(volume: Float) { controller?.volume = volume.coerceIn(0f, 1f) }
+
     fun previous() { controller?.seekToPrevious() }
 
     fun seekTo(positionMs: Long) {

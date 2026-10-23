@@ -24,6 +24,7 @@ data class GeneralState(
     val sleepPauseDelayMs: Long,
     val resumeOnWake: Boolean,
     val resumeOnBoot: Boolean,
+    val screenGestures: Boolean,
 )
 
 sealed interface BackupState {
@@ -50,7 +51,7 @@ class GeneralViewModel @Inject constructor(
     private val _backup = MutableStateFlow<BackupState>(BackupState.Idle)
     val backupState = _backup.asStateFlow()
 
-    private fun read() = GeneralState(library.autoScan, library.minDurationMs, playback.sleepPauseDelayMs, playback.resumeOnWake, playback.resumeOnBoot)
+    private fun read() = GeneralState(library.autoScan, library.minDurationMs, playback.sleepPauseDelayMs, playback.resumeOnWake, playback.resumeOnBoot, playback.screenGestures)
 
     fun rescan() = scanner.scan()
     fun setAutoScan(on: Boolean) { library.autoScan = on; _state.value = read() }
@@ -58,6 +59,7 @@ class GeneralViewModel @Inject constructor(
     fun setSleepDelay(ms: Long) { playback.sleepPauseDelayMs = ms; _state.value = read() }
     fun setResumeOnWake(on: Boolean) { playback.resumeOnWake = on; _state.value = read() }
     fun setResumeOnBoot(on: Boolean) { playback.resumeOnBoot = on; _state.value = read() }
+    fun setScreenGestures(on: Boolean) { playback.screenGestures = on; _state.value = read() }
 
     fun exportBackup() = viewModelScope.launch {
         _backup.value = BackupState.Working

@@ -75,6 +75,7 @@ fun GeneralScreen(modifier: Modifier = Modifier, viewModel: GeneralViewModel = h
                 )
                 SwitchRow(R.string.settings_resume_wake, R.string.settings_resume_wake_hint, s.resumeOnWake, viewModel::setResumeOnWake)
                 SwitchRow(R.string.settings_resume_boot, R.string.settings_resume_boot_hint, s.resumeOnBoot, viewModel::setResumeOnBoot)
+                SwitchRow(R.string.settings_gestures, R.string.settings_gestures_hint, s.screenGestures, viewModel::setScreenGestures)
             }
         }
         item {

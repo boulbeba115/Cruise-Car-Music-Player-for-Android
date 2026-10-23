@@ -40,10 +40,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.boulbeba.cruise.core.data.db.TrackRow
 import com.boulbeba.cruise.core.designsystem.component.skinTitle
+import com.boulbeba.cruise.core.designsystem.component.CruiseIconButton
 import com.boulbeba.cruise.core.designsystem.icon.CruiseIcons
 import com.boulbeba.cruise.core.designsystem.theme.CruiseTheme
 import com.boulbeba.cruise.core.ui.CoverImage
 import com.boulbeba.cruise.core.ui.NavRequests
+import com.boulbeba.cruise.core.ui.VoiceRequests
 import com.boulbeba.cruise.core.ui.TrackItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -81,6 +83,9 @@ fun SearchScreen(onOpenLibrary: () -> Unit, modifier: Modifier = Modifier, viewM
                 singleLine = true,
                 placeholder = { Text(stringResource(R.string.search_hint), style = CruiseTheme.typography.body) },
                 leadingIcon = { Icon(painterResource(CruiseIcons.Search), contentDescription = null, tint = colors.accent) },
+                trailingIcon = {
+                    CruiseIconButton(CruiseIcons.Mic, stringResource(R.string.search_voice), onClick = VoiceRequests::requestListen, size = 56.dp, tint = colors.accent)
+                },
                 textStyle = CruiseTheme.typography.subtitle,
                 shape = RoundedCornerShape(CruiseTheme.dimens.cardRadius),
                 colors = TextFieldDefaults.colors(
