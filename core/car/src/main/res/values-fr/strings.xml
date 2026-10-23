@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="steering_helper_label">Assistant volant Cruise</string>
+    <string name="steering_helper_description">Quand vous donnez une nouvelle fonction à un bouton du volant dans Cruise, l\'autoradio ouvre quand même son propre écran pour ce bouton (téléphone Bluetooth ou mixeur audio). Cet assistant ferme cet écran immédiatement. Il ne surveille que ces deux écrans et n\'y lit rien.</string>
+</resources>

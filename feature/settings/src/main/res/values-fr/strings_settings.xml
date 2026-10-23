@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_tab_appearance">Apparence</string>
+    <string name="settings_tab_general">Bibliothèque et lecture</string>
+    <string name="settings_library">Bibliothèque</string>
+    <string name="settings_library_count">%1$d morceaux dans la bibliothèque</string>
+    <string name="settings_scan_progress">Lecture de %1$d fichiers sur %2$d…</string>
+    <string name="settings_rescan">Réanalyser</string>
+    <string name="settings_auto_scan">Analyse automatique</string>
+    <string name="settings_auto_scan_hint">Au démarrage de Cruise et à l\'insertion d\'une clé USB</string>
+    <string name="settings_min_duration">Ignorer les fichiers courts</string>
+    <string name="settings_min_duration_hint">Les fichiers plus courts (jingles, sons de notification) restent hors de la bibliothèque</string>
+    <string name="settings_playback">Lecture</string>
+    <string name="settings_sleep_pause">Pause à l\'arrêt de la voiture</string>
+    <string name="settings_sleep_pause_hint">Délai après l\'extinction de l\'écran avant la pause</string>
+    <string name="settings_never">Jamais</string>
+    <string name="settings_resume_wake">Reprendre au démarrage</string>
+    <string name="settings_resume_wake_hint">Continuer le morceau là où il s\'est arrêté</string>
+    <string name="settings_resume_boot">Reprendre après un arrêt complet</string>
+    <string name="settings_resume_boot_hint">Quand l\'autoradio est resté éteint longtemps</string>
+    <string name="settings_backup">Sauvegarde</string>
+    <string name="settings_backup_hint">Skins, son, touches du volant, playlists, favoris et écoutes dans Cruise/cruise-backup.json sur la clé USB.</string>
+    <string name="settings_backup_save">Sauvegarder</string>
+    <string name="settings_backup_restore">Restaurer</string>
+    <string name="settings_backup_saved">Enregistré dans %1$s</string>
+    <string name="settings_backup_restored">Restauré : %1$d compteurs d\'écoute, %2$d playlists. Redémarrez pour appliquer les réglages.</string>
+    <string name="settings_backup_failed">Échec : %1$s</string>
+    <string name="settings_restart">Redémarrer Cruise</string>
+    <string name="appearance_skin">Skin</string>
+    <string name="appearance_night">Nuit</string>
+    <string name="appearance_night_skin">Skin avec les phares allumés</string>
+    <string name="appearance_night_hint">Change automatiquement quand vous allumez les feux</string>
+    <string name="appearance_night_same">Même skin</string>
+    <string name="appearance_headlights_on">Les phares sont allumés</string>
+    <string name="appearance_display">Affichage</string>
+    <string name="appearance_scale">Taille</string>
+    <string name="appearance_scale_hint">Agrandir ou réduire toute l\'interface</string>
+    <string name="appearance_performance">Animations</string>
+    <string name="appearance_performance_hint">Auto choisit le meilleur niveau pour cet appareil</string>
+    <string name="appearance_perf_auto">Auto</string>
+    <string name="appearance_perf_full">Complètes</string>
+    <string name="appearance_perf_balanced">Équilibrées</string>
+    <string name="appearance_perf_saver">Économie</string>
+</resources>

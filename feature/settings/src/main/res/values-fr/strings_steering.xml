@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_tab_steering">Volant</string>
+    <string name="sw_status_title">Autoradio</string>
+    <string name="sw_status_unit">Connexion</string>
+    <string name="sw_unit_generic">Android standard (touches média)</string>
+    <string name="sw_unit_tw_connected">Autoradio TW, connecté · source %1$s</string>
+    <string name="sw_unit_tw_not_connected">Autoradio TW, non connecté</string>
+    <string name="sw_status_call">Téléphone</string>
+    <string name="sw_status_helper">Assistant volant</string>
+    <string name="sw_on">Activé</string>
+    <string name="sw_off">Désactivé</string>
+    <string name="sw_smart_call">Le bouton téléphone décroche et raccroche</string>
+    <string name="sw_smart_call_hint">Quand le téléphone sonne : appui court décroche, appui long refuse. Pendant un appel : raccroche. Sinon, le bouton fait ce que vous choisissez ci-dessous.</string>
+    <string name="sw_helper_hint">Activez l\'assistant pour que l\'écran Bluetooth ou le mixeur audio de l\'autoradio se ferme tout seul quand vous utilisez un bouton reprogrammé. Dans la liste, choisissez « Assistant volant Cruise ».</string>
+    <string name="sw_helper_enable">Activer l\'assistant</string>
+    <string name="sw_press_title">Appuyez sur un bouton du volant</string>
+    <string name="sw_press_waiting">En attente…</string>
+    <string name="sw_press_last">%1$s (%2$d) · %3$s</string>
+    <string name="sw_press_short">Appui court</string>
+    <string name="sw_press_long">Appui long</string>
+    <string name="sw_fixed_media_key">Touche média : contrôle déjà Cruise</string>
+    <string name="sw_actions_summary">Court : %1$s · Long : %2$s</string>
+    <string name="sw_button_unknown">Bouton</string>
+    <string name="sw_action_unit">Défaut autoradio</string>
+    <string name="sw_action_play_pause">Lecture / Pause</string>
+    <string name="sw_action_next">Piste suivante</string>
+    <string name="sw_action_previous">Piste précédente</string>
+    <string name="sw_action_next_folder">Dossier suivant</string>
+    <string name="sw_action_previous_folder">Dossier précédent</string>
+    <string name="sw_action_shuffle">Aléatoire on/off</string>
+    <string name="sw_action_repeat">Mode répétition</string>
+    <string name="sw_action_open">Ouvrir Cruise</string>
+    <string name="sw_action_nothing">Rien</string>
+</resources>

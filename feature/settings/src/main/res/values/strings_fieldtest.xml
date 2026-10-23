@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="diagnostics_tab_car_test">Car test</string>
+
+    <string name="ft_intro">Do these steps in order, in the car, engine running. About 15 minutes. Everything is saved on the USB stick in a folder called cruise-fieldtest — bring the stick back to the computer afterwards.</string>
+    <string name="ft_measuring">Measuring smoothness… (6 s)</string>
+
+    <string name="ft_step_permissions">Allow access</string>
+    <string name="ft_hint_permissions">Allow storage (to read the USB stick and save results), location (GPS speed while driving) and, if offered, ignore battery optimisation.</string>
+    <string name="ft_step_logger">Start the background recorder</string>
+    <string name="ft_hint_logger">Records ignition off/on, sleep, USB stick, calls, navigation voice and steering keys. Leave it running while you drive for a few days; it saves to the USB stick by itself and stops after 3 days.</string>
+    <string name="ft_step_report">Device report</string>
+    <string name="ft_hint_report">Reads the real Android version, chip, memory, screen, audio output and codecs.</string>
+    <string name="ft_step_sound">Speaker check</string>
+    <string name="ft_hint_sound">Volume at a normal level. Play the left tone, then the right tone, then answer what you heard.</string>
+    <string name="ft_step_performance">Performance</string>
+    <string name="ft_hint_performance">Shows a 6-second animation and then measures the processor for the sound engine. Do not touch the screen.</string>
+    <string name="ft_step_keys">Steering-wheel buttons</string>
+    <string name="ft_hint_keys">Start music in Cruise first (Folders). Then open Settings → Steering wheel: press every steering-wheel button (short, then long) and check each one shows up. Give the phone and sound-mixer buttons the jobs you want and try them. If you can, test answering and hanging up a call with the phone button. Then tap Done here.</string>
+    <string name="ft_step_usb">USB music scan</string>
+    <string name="ft_hint_usb">Looks at the music on the USB stick: folders, formats, covers, read speed. Can take a few minutes for a big stick.</string>
+    <string name="ft_step_vendor">Unit system files</string>
+    <string name="ft_hint_vendor">Copies the unit\'s audio and key settings and its built-in apps to the USB stick (up to 800 MB), so the steering wheel and ignition signals can be worked out on the computer.</string>
+    <string name="ft_step_power">Ignition and reverse</string>
+    <string name="ft_hint_power">With music playing in Cruise: 1) turn the ignition off, wait 1 minute, turn it on — the music should come back by itself. 2) Engage reverse for 5 seconds. 3) If you can: start a navigation voice instruction. Then tap Done.</string>
+    <string name="ft_step_save">Save to the USB stick</string>
+    <string name="ft_hint_save">Saves everything. Then: in the unit\'s Settings → About Device, tap \"Export locat.bin\". Photograph the steering-wheel, CAN and sound settings pages.</string>
+
+    <string name="ft_run">Run</string>
+    <string name="ft_done">Done</string>
+    <string name="ft_grant_storage">Storage</string>
+    <string name="ft_grant_location">Location</string>
+    <string name="ft_grant_notifications">Notifications</string>
+    <string name="ft_battery">Battery</string>
+    <string name="ft_logger_start">Start recorder</string>
+    <string name="ft_logger_stop">Stop recorder</string>
+    <string name="ft_tone_left">Left tone</string>
+    <string name="ft_tone_right">Right tone</string>
+    <string name="ft_tone_both">Both</string>
+    <string name="ft_answer_ok">Correct</string>
+    <string name="ft_answer_swapped">Swapped</string>
+    <string name="ft_answer_one">Only one side</string>
+    <string name="ft_answer_none">No sound</string>
+    <string name="ft_open_key_tester">Open key tester</string>
+    <string name="ft_save_all">Save everything</string>
+</resources>

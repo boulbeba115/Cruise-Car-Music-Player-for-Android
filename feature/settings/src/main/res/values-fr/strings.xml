@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="diagnostics_title">Réglages</string>
+    <string name="diagnostics_tab_report">Rapport de l\'appareil</string>
+    <string name="diagnostics_tab_keys">Test des touches</string>
+    <string name="diagnostics_save">Enregistrer le rapport</string>
+    <string name="diagnostics_saved">Rapport enregistré : %1$s. Copiez-le vers votre ordinateur.</string>
+    <string name="diagnostics_save_failed">Impossible d\'enregistrer le rapport : %1$s</string>
+    <string name="diagnostics_keys_hint">Appuyez une fois sur chaque bouton du volant, puis maintenez chacun pendant deux secondes. Chaque événement s\'affiche ici et figure dans le rapport enregistré.</string>
+    <string name="diagnostics_keys_clear">Effacer</string>
+    <string name="diagnostics_keys_empty">En attente d\'un bouton…</string>
+</resources>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="snd_title">Sound</string>
+    <string name="snd_headroom">Clip-free: %1$s dB headroom</string>
+    <string name="snd_pure">Pure: no processing, the file as it is</string>
+    <string name="snd_effects">Effects</string>
+    <string name="snd_compare">Hold to compare</string>
+    <string name="snd_preamp">Pre-amp</string>
+    <string name="snd_bass">Bass boost</string>
+    <string name="snd_width">Stereo width</string>
+    <string name="snd_balance">Balance</string>
+    <string name="snd_loudness">Loudness</string>
+    <string name="snd_loudness_hint">Fuller bass and treble at low volume, like your ears need.</string>
+    <string name="snd_limiter">Limiter</string>
+    <string name="snd_limiter_hint">Stops any distortion from loud passages or big EQ boosts.</string>
+    <string name="snd_focus">Driver focus</string>
+    <string name="snd_focus_hint">Centres the stereo image on one seat by timing the near and far speakers.</string>
+    <string name="snd_focus_driver">Driver</string>
+    <string name="snd_focus_passenger">Passenger</string>
+    <string name="snd_focus_off">Everyone</string>
+    <string name="snd_rg">Volume levelling (ReplayGain)</string>
+    <string name="snd_rg_hint">Plays every song at the same loudness using the gain stored in its tags. Auto keeps albums as mastered and levels shuffled songs.</string>
+    <string name="snd_rg_preamp">Levelling pre-amp</string>
+    <string name="rg_off">Off</string>
+    <string name="rg_track">Track</string>
+    <string name="rg_album">Album</string>
+    <string name="rg_auto">Auto</string>
+    <string name="preset_flat">Flat</string>
+    <string name="preset_megane">Mégane cabin</string>
+    <string name="preset_highway">Highway</string>
+    <string name="preset_bass">Bass</string>
+    <string name="preset_vocal">Vocal</string>
+    <string name="preset_rock">Rock</string>
+    <string name="preset_pop">Pop</string>
+    <string name="preset_electronic">Electronic</string>
+    <string name="preset_jazz">Jazz</string>
+    <string name="preset_classical">Classical</string>
+    <string name="preset_night">Night</string>
+</resources>

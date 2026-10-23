@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lib_title">Bibliothèque</string>
+    <string name="lib_tracks_count">%1$d titres</string>
+    <string name="lib_scanning">Analyse… %1$d fichiers</string>
+    <string name="lib_rescan">Réanalyser</string>
+    <string name="lib_back">Retour</string>
+    <string name="lib_tab_albums">Albums</string>
+    <string name="lib_tab_artists">Artistes</string>
+    <string name="lib_tab_genres">Genres</string>
+    <string name="lib_tab_tracks">Titres</string>
+    <string name="lib_tab_years">Années</string>
+    <string name="lib_tab_quality">Qualité</string>
+    <string name="lib_tab_recent">Ajouts récents</string>
+    <string name="lib_tab_most">Les plus écoutés</string>
+    <string name="lib_tab_favorites">Favoris</string>
+    <string name="lib_sort">Tri : %1$s</string>
+    <string name="sort_title">Titre</string>
+    <string name="sort_artist">Artiste</string>
+    <string name="sort_album">Album</string>
+    <string name="sort_year">Année</string>
+    <string name="sort_added">Date d\'ajout</string>
+    <string name="sort_duration">Durée</string>
+    <string name="sort_filename">Nom de fichier</string>
+    <string name="quality_hires">Hi-Res</string>
+    <string name="quality_lossless">Sans perte</string>
+    <string name="quality_lossy">Compressé</string>
+    <string name="lib_play">Lecture</string>
+    <string name="lib_shuffle">Aléatoire</string>
+    <string name="lib_albums_count">%1$d albums · %2$d titres</string>
+    <string name="lib_detail_summary">%1$d titres · %2$s</string>
+    <string name="lib_disc">Disque %1$d</string>
+    <string name="lib_empty_title">Pas encore de musique</string>
+    <string name="lib_empty_body">Branchez votre clé USB et autorisez l\'accès à votre musique. La bibliothèque se remplit en arrière-plan.</string>
+    <string name="lib_nothing_here">Rien ici pour l\'instant.</string>
+    <string name="unknown_artist">Artiste inconnu</string>
+
+    <string name="act_play_now">Lire maintenant</string>
+    <string name="act_play_next">Lire ensuite</string>
+    <string name="act_add_queue">Ajouter à la file</string>
+    <string name="act_add_playlist">Ajouter à une playlist…</string>
+    <string name="act_favorite">Favori oui / non</string>
+    <string name="act_go_album">Aller à l\'album</string>
+    <string name="act_go_folder">Ouvrir le dossier</string>
+    <string name="act_new_playlist">Nouvelle playlist…</string>
+    <string name="act_choose_playlist">Ajouter à quelle playlist ?</string>
+
+    <string name="search_title">Recherche</string>
+    <string name="search_hint">Titre, artiste, album, dossier…</string>
+    <string name="search_tracks">Titres</string>
+    <string name="search_albums">Albums</string>
+    <string name="search_artists">Artistes</string>
+    <string name="search_none">Aucun résultat pour « %1$s ».</string>
+
+    <string name="pl_title">Playlists</string>
+    <string name="pl_new">Nouvelle playlist</string>
+    <string name="pl_save_queue">Enregistrer la file comme playlist</string>
+    <string name="pl_name">Nom de la playlist</string>
+    <string name="pl_create">Créer</string>
+    <string name="pl_rename">Renommer</string>
+    <string name="pl_delete">Supprimer la playlist</string>
+    <string name="pl_export">Exporter sur la clé USB</string>
+    <string name="pl_exported">Enregistrée dans %1$s</string>
+    <string name="pl_count">%1$d titres</string>
+    <string name="pl_imported">Depuis %1$s</string>
+    <string name="pl_empty">Aucune playlist. Appuyez longuement sur un titre ou un album pour l\'ajouter à une playlist.</string>
+    <string name="pl_remove">Retirer de la playlist</string>
+    <string name="pl_move_up">Monter</string>
+    <string name="pl_move_down">Descendre</string>
+    <string name="pl_queue_name">Trajet %1$s</string>
+</resources>

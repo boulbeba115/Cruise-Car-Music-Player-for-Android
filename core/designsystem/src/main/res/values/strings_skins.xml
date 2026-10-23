@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="skin_midnight">Midnight</string>
+    <string name="skin_midnight_tagline">Calm and dark. Colours follow each album cover.</string>
+    <string name="skin_neon">Neon Drive</string>
+    <string name="skin_neon_tagline">Synthwave night: retro horizon grid, neon glow, oscilloscope bar.</string>
+    <string name="skin_amber">Amber Cockpit</string>
+    <string name="skin_amber_tagline">A dashboard: amber LEDs, tachometer progress ring, digital type.</string>
+    <string name="skin_vinyl">Vinyl Lounge</string>
+    <string name="skin_vinyl_tagline">Warm wood and brass. Your album spins on a record.</string>
+    <string name="skin_aurora">Aurora</string>
+    <string name="skin_aurora_tagline">Flowing northern lights and soft glass.</string>
+    <string name="skin_oled">OLED Pure</string>
+    <string name="skin_oled_tagline">True black, big type, nothing else. Lightest on the processor.</string>
+    <string name="skin_daylight">Daylight</string>
+    <string name="skin_daylight_tagline">Bright and high contrast for sunny days.</string>
+</resources>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="folders_title">Dossiers</string>
+    <string name="folders_up">Retour</string>
+    <string name="folders_usb">Clé USB (%1$s)</string>
+    <string name="folders_internal">Stockage interne</string>
+    <string name="folders_space">%1$.0f Go · %2$.0f Go libres</string>
+    <string name="folders_play_all">Tout lire</string>
+    <string name="folders_shuffle">Aléatoire</string>
+    <string name="folders_empty">Aucune musique dans ce dossier.</string>
+    <string name="folders_permission_title">Autorisez l\'accès à votre musique</string>
+    <string name="folders_permission_body">Cruise lit la musique de la clé USB et du stockage interne. Il ne modifie ni ne supprime jamais vos fichiers.</string>
+    <string name="folders_permission_grant">Autoriser</string>
+</resources>

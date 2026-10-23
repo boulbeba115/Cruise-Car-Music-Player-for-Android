@@ -1,0 +1,64 @@
+package com.boulbeba.cruise.feature.nowplaying
+
+import android.graphics.BitmapFactory
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.palette.graphics.Palette
+import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+@Immutable
+data class DecodedArtwork(val image: ImageBitmap?, val accent: Color?, val deep: Color?)
+
+/**
+ * Decodes embedded cover art at display size on a background thread (the owner's unit has 1 GB RAM: never decode
+ * a 3000 px cover at full size) and extracts its colours for the background (SPEC VIS-1).
+ */
+@Composable
+fun rememberArtwork(bytes: ByteArray?, key: String?, trackPath: String?, targetPx: Int): DecodedArtwork {
+    var result by remember { mutableStateOf(DecodedArtwork(null, null, null)) }
+    val folder = trackPath?.let { File(it).parentFile }
+    LaunchedEffect(key, folder?.path, targetPx) {
+        result = withContext(Dispatchers.IO) {
+            // Embedded art first, then the folder's image (SPEC ART-1, ART-2).
+            val data = bytes ?: folder?.let(::folderImage)?.let { runCatching { it.readBytes() }.getOrNull() }
+            if (data == null) DecodedArtwork(null, null, null) else decode(data, targetPx)
+        }
+    }
+    return result
+}
+
+private val folderImageNames = Regex("^(cover|folder|front|album|albumart.*)\\.(jpe?g|png|webp)$", RegexOption.IGNORE_CASE)
+
+/** `cover.jpg`, `Folder.png`, `AlbumArtSmall.jpg`… in the track's folder, or the parent of a `CD1`/`Disc 2` folder. */
+private fun folderImage(dir: File): File? {
+    fun find(d: File) = d.listFiles { f -> f.isFile && folderImageNames.matches(f.name) }
+        ?.sortedBy { if (it.name.startsWith("albumart", ignoreCase = true)) 1 else 0 }?.firstOrNull()
+    return find(dir) ?: if (dir.name.matches(Regex("(?i)^(cd|disc|disk)\\s*\\d+$"))) dir.parentFile?.let(::find) else null
+}
+
+private fun decode(bytes: ByteArray, targetPx: Int): DecodedArtwork = runCatching {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+    var sample = 1
+    while (bounds.outWidth / (sample * 2) >= targetPx && bounds.outHeight / (sample * 2) >= targetPx) sample *= 2
+    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample })
+        ?: return DecodedArtwork(null, null, null)
+    val palette = Palette.from(bitmap).maximumColorCount(12).generate()
+    // Grey or black-and-white covers have no colour worth following: keep the skin's accent then.
+    fun Palette.Swatch.colourful() = hsl[1] >= 0.25f && hsl[2] in 0.15f..0.85f
+    val accent = listOfNotNull(palette.vibrantSwatch, palette.lightVibrantSwatch, palette.dominantSwatch)
+        .firstOrNull { it.colourful() }?.rgb?.let(::Color)
+    val deep = listOfNotNull(palette.darkMutedSwatch, palette.darkVibrantSwatch, palette.dominantSwatch)
+        .firstOrNull { it.hsl[1] >= 0.15f }?.rgb?.let(::Color)
+    DecodedArtwork(bitmap.asImageBitmap(), accent, deep)
+}.getOrDefault(DecodedArtwork(null, null, null))

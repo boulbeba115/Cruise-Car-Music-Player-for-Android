@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="diagnostics_title">Settings</string>
+    <string name="diagnostics_tab_report">Device report</string>
+    <string name="diagnostics_tab_keys">Key tester</string>
+    <string name="diagnostics_save">Save report</string>
+    <string name="diagnostics_saved">Report saved: %1$s. Copy it to your computer.</string>
+    <string name="diagnostics_save_failed">Could not save the report: %1$s</string>
+    <string name="diagnostics_keys_hint">Press each steering-wheel button once, then hold each one for two seconds. Every event is listed here and included in the saved report.</string>
+    <string name="diagnostics_keys_clear">Clear</string>
+    <string name="diagnostics_keys_empty">Waiting for a button…</string>
+</resources>

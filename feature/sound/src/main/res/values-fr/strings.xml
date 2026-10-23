@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="snd_title">Son</string>
+    <string name="snd_headroom">Sans saturation : marge de %1$s dB</string>
+    <string name="snd_pure">Pur : aucun traitement, le fichier tel quel</string>
+    <string name="snd_effects">Effets</string>
+    <string name="snd_compare">Maintenir pour comparer</string>
+    <string name="snd_preamp">Pré-ampli</string>
+    <string name="snd_bass">Renfort de basses</string>
+    <string name="snd_width">Largeur stéréo</string>
+    <string name="snd_balance">Balance</string>
+    <string name="snd_loudness">Loudness</string>
+    <string name="snd_loudness_hint">Basses et aigus plus pleins à faible volume, comme l\'oreille en a besoin.</string>
+    <string name="snd_limiter">Limiteur</string>
+    <string name="snd_limiter_hint">Empêche toute distorsion sur les passages forts ou les gros réglages d\'égaliseur.</string>
+    <string name="snd_focus">Centrage conducteur</string>
+    <string name="snd_focus_hint">Centre l\'image stéréo sur une place en décalant les haut-parleurs proches et éloignés.</string>
+    <string name="snd_focus_driver">Conducteur</string>
+    <string name="snd_focus_passenger">Passager</string>
+    <string name="snd_focus_off">Tout le monde</string>
+    <string name="snd_rg">Nivellement du volume (ReplayGain)</string>
+    <string name="snd_rg_hint">Joue chaque titre au même volume grâce au gain stocké dans ses tags. Auto garde les albums tels que masterisés et nivelle les titres en aléatoire.</string>
+    <string name="snd_rg_preamp">Pré-ampli de nivellement</string>
+    <string name="rg_off">Désactivé</string>
+    <string name="rg_track">Titre</string>
+    <string name="rg_album">Album</string>
+    <string name="rg_auto">Auto</string>
+    <string name="preset_flat">Neutre</string>
+    <string name="preset_megane">Habitacle Mégane</string>
+    <string name="preset_highway">Autoroute</string>
+    <string name="preset_bass">Basses</string>
+    <string name="preset_vocal">Voix</string>
+    <string name="preset_rock">Rock</string>
+    <string name="preset_pop">Pop</string>
+    <string name="preset_electronic">Électro</string>
+    <string name="preset_jazz">Jazz</string>
+    <string name="preset_classical">Classique</string>
+    <string name="preset_night">Nuit</string>
+</resources>

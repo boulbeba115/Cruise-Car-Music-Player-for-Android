@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="steering_helper_label">Cruise steering-wheel helper</string>
+    <string name="steering_helper_description">When you give a steering-wheel button a new job in Cruise, the head unit still opens its own screen for that button (Bluetooth phone or sound mixer). This helper closes that screen straight away. It only watches those two screens and reads nothing on them.</string>
+</resources>

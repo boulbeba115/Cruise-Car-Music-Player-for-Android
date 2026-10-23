@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="diagnostics_tab_car_test">Test voiture</string>
+
+    <string name="ft_intro">Faites ces étapes dans l\'ordre, dans la voiture, moteur allumé. Environ 15 minutes. Tout est enregistré sur la clé USB dans un dossier cruise-fieldtest — rapportez ensuite la clé à l\'ordinateur.</string>
+    <string name="ft_measuring">Mesure de la fluidité… (6 s)</string>
+
+    <string name="ft_step_permissions">Autoriser l\'accès</string>
+    <string name="ft_hint_permissions">Autorisez le stockage (lire la clé USB et enregistrer les résultats), la localisation (vitesse GPS en roulant) et, si proposé, ignorer l\'optimisation de la batterie.</string>
+    <string name="ft_step_logger">Démarrer l\'enregistreur</string>
+    <string name="ft_hint_logger">Enregistre contact coupé/mis, veille, clé USB, appels, voix de navigation et touches du volant. Laissez-le tourner quelques jours en roulant ; il enregistre seul sur la clé USB et s\'arrête après 3 jours.</string>
+    <string name="ft_step_report">Rapport de l\'appareil</string>
+    <string name="ft_hint_report">Lit la vraie version d\'Android, la puce, la mémoire, l\'écran, la sortie audio et les codecs.</string>
+    <string name="ft_step_sound">Test des haut-parleurs</string>
+    <string name="ft_hint_sound">Volume normal. Jouez le son gauche, puis le son droit, puis indiquez ce que vous avez entendu.</string>
+    <string name="ft_step_performance">Performances</string>
+    <string name="ft_hint_performance">Affiche une animation de 6 secondes puis mesure le processeur pour le moteur audio. Ne touchez pas l\'écran.</string>
+    <string name="ft_step_keys">Boutons du volant</string>
+    <string name="ft_hint_keys">Lancez d\'abord la musique dans Cruise (Dossiers). Ouvrez ensuite Réglages → Volant : appuyez sur chaque bouton du volant (court, puis long) et vérifiez qu\'il s\'affiche. Donnez aux boutons téléphone et mixeur les fonctions voulues et essayez-les. Si possible, testez décrocher et raccrocher un appel avec le bouton téléphone. Puis touchez Terminé ici.</string>
+    <string name="ft_step_usb">Analyse de la musique USB</string>
+    <string name="ft_hint_usb">Examine la musique de la clé USB : dossiers, formats, pochettes, vitesse de lecture. Peut prendre quelques minutes.</string>
+    <string name="ft_step_vendor">Fichiers système de l\'autoradio</string>
+    <string name="ft_hint_vendor">Copie les réglages audio et touches de l\'autoradio et ses applications intégrées sur la clé USB (jusqu\'à 800 Mo), pour analyser sur l\'ordinateur les signaux du volant et du contact.</string>
+    <string name="ft_step_power">Contact et marche arrière</string>
+    <string name="ft_hint_power">Musique en cours dans Cruise : 1) coupez le contact, attendez 1 minute, remettez le contact — la musique doit reprendre toute seule. 2) Passez la marche arrière 5 secondes. 3) Si possible : lancez une instruction vocale de navigation. Puis touchez Terminé.</string>
+    <string name="ft_step_save">Enregistrer sur la clé USB</string>
+    <string name="ft_hint_save">Enregistre tout. Ensuite : dans Réglages → À propos de l\'appareil, touchez « Export locat.bin ». Photographiez les pages de réglages du volant, du CAN et du son.</string>
+
+    <string name="ft_run">Lancer</string>
+    <string name="ft_done">Terminé</string>
+    <string name="ft_grant_storage">Stockage</string>
+    <string name="ft_grant_location">Localisation</string>
+    <string name="ft_grant_notifications">Notifications</string>
+    <string name="ft_battery">Batterie</string>
+    <string name="ft_logger_start">Démarrer</string>
+    <string name="ft_logger_stop">Arrêter</string>
+    <string name="ft_tone_left">Son gauche</string>
+    <string name="ft_tone_right">Son droit</string>
+    <string name="ft_tone_both">Les deux</string>
+    <string name="ft_answer_ok">Correct</string>
+    <string name="ft_answer_swapped">Inversé</string>
+    <string name="ft_answer_one">Un seul côté</string>
+    <string name="ft_answer_none">Aucun son</string>
+    <string name="ft_open_key_tester">Ouvrir le test</string>
+    <string name="ft_save_all">Tout enregistrer</string>
+</resources>

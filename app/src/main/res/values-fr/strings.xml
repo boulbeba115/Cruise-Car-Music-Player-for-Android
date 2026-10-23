@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_now_playing">Lecture</string>
+    <string name="nav_library">Bibliothèque</string>
+    <string name="nav_folders">Dossiers</string>
+    <string name="nav_playlists">Playlists</string>
+    <string name="nav_search">Recherche</string>
+    <string name="nav_sound">Son</string>
+    <string name="nav_settings">Réglages</string>
+
+
+
+</resources>

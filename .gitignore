@@ -1,0 +1,17 @@
+.gradle/
+.kotlin/
+build/
+/local.properties
+/captures/
+.idea/
+*.iml
+.DS_Store
+.cxx/
+.externalNativeBuild/
+*.apk
+*.aab
+*.keystore
+!debug.keystore
+
+# Car test data from the owner's unit: vendor APKs, photos, device logs. Never public.
+/inputs/

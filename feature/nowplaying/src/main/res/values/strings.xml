@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="np_track_of">%1$d / %2$d</string>
+    <string name="np_play">Play</string>
+    <string name="np_pause">Pause</string>
+    <string name="np_next">Next track</string>
+    <string name="np_previous">Previous track</string>
+    <string name="np_shuffle">Shuffle</string>
+    <string name="np_repeat">Repeat</string>
+    <string name="np_empty_title">Ready when you are</string>
+    <string name="np_empty_body">Pick a folder on your USB stick to start the music.</string>
+    <string name="np_open_folders">Open folders</string>
+    <string name="np_favorite">Favourite</string>
+    <string name="np_lyrics">Lyrics</string>
+    <string name="np_queue_open">Queue</string>
+    <string name="np_queue">Up next · %1$d</string>
+    <string name="np_queue_clear">Clear</string>
+    <string name="np_close">Close</string>
+    <string name="np_move_up">Move up</string>
+    <string name="np_remove">Remove</string>
+    <string name="np_info">Track info</string>
+    <string name="np_info_format">Format</string>
+    <string name="np_info_rate">Sample rate</string>
+    <string name="np_info_length">Length</string>
+    <string name="np_info_year">Year</string>
+    <string name="np_info_genre">Genre</string>
+    <string name="np_info_plays">Plays</string>
+    <string name="np_info_file">File</string>
+    <string name="np_blind">Blind mode</string>
+    <string name="np_blind_hint">Tap: play / pause · Swipe ← →: track · Swipe ↑ ↓: volume</string>
+    <string name="np_blind_exit">Exit</string>
+</resources>

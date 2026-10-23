@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_tab_steering">Steering wheel</string>
+    <string name="sw_status_title">Head unit</string>
+    <string name="sw_status_unit">Connection</string>
+    <string name="sw_unit_generic">Standard Android (media keys)</string>
+    <string name="sw_unit_tw_connected">TW unit, connected · source %1$s</string>
+    <string name="sw_unit_tw_not_connected">TW unit, not connected</string>
+    <string name="sw_status_call">Phone</string>
+    <string name="sw_status_helper">Steering-wheel helper</string>
+    <string name="sw_on">On</string>
+    <string name="sw_off">Off</string>
+    <string name="sw_smart_call">Phone button answers and hangs up calls</string>
+    <string name="sw_smart_call_hint">While the phone rings: short press answers, long press rejects. During a call: hangs up. Otherwise the button does what you choose below.</string>
+    <string name="sw_helper_hint">Turn on the helper so the unit\'s Bluetooth or sound-mixer screen closes by itself when you use a remapped button. In the list, choose \"Cruise steering-wheel helper\".</string>
+    <string name="sw_helper_enable">Turn on helper</string>
+    <string name="sw_press_title">Press a button on the steering wheel</string>
+    <string name="sw_press_waiting">Waiting…</string>
+    <string name="sw_press_last">%1$s (%2$d) · %3$s</string>
+    <string name="sw_press_short">Short press</string>
+    <string name="sw_press_long">Long press</string>
+    <string name="sw_fixed_media_key">Media key: already controls Cruise</string>
+    <string name="sw_actions_summary">Short: %1$s · Long: %2$s</string>
+    <string name="sw_button_unknown">Button</string>
+    <string name="sw_action_unit">Unit default</string>
+    <string name="sw_action_play_pause">Play / Pause</string>
+    <string name="sw_action_next">Next track</string>
+    <string name="sw_action_previous">Previous track</string>
+    <string name="sw_action_next_folder">Next folder</string>
+    <string name="sw_action_previous_folder">Previous folder</string>
+    <string name="sw_action_shuffle">Shuffle on/off</string>
+    <string name="sw_action_repeat">Repeat mode</string>
+    <string name="sw_action_open">Open Cruise</string>
+    <string name="sw_action_nothing">Nothing</string>
+</resources>

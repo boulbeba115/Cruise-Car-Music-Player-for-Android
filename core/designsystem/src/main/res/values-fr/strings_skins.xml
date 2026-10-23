@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="skin_midnight">Minuit</string>
+    <string name="skin_midnight_tagline">Calme et sombre. Les couleurs suivent chaque pochette.</string>
+    <string name="skin_neon">Neon Drive</string>
+    <string name="skin_neon_tagline">Nuit synthwave : grille rétro, néons, barre oscilloscope.</string>
+    <string name="skin_amber">Cockpit ambre</string>
+    <string name="skin_amber_tagline">Un tableau de bord : LED ambre, compte-tours de lecture, chiffres digitaux.</string>
+    <string name="skin_vinyl">Salon vinyle</string>
+    <string name="skin_vinyl_tagline">Bois chaleureux et laiton. Votre album tourne sur un disque.</string>
+    <string name="skin_aurora">Aurore</string>
+    <string name="skin_aurora_tagline">Aurores boréales en mouvement et verre doux.</string>
+    <string name="skin_oled">OLED pur</string>
+    <string name="skin_oled_tagline">Noir absolu, grands textes, rien d\'autre. Le plus léger pour le processeur.</string>
+    <string name="skin_daylight">Plein jour</string>
+    <string name="skin_daylight_tagline">Clair et très contrasté pour les journées ensoleillées.</string>
+</resources>

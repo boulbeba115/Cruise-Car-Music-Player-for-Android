@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="np_track_of">%1$d / %2$d</string>
+    <string name="np_play">Lecture</string>
+    <string name="np_pause">Pause</string>
+    <string name="np_next">Piste suivante</string>
+    <string name="np_previous">Piste précédente</string>
+    <string name="np_shuffle">Aléatoire</string>
+    <string name="np_repeat">Répéter</string>
+    <string name="np_empty_title">Prêt quand vous l\'êtes</string>
+    <string name="np_empty_body">Choisissez un dossier de votre clé USB pour lancer la musique.</string>
+    <string name="np_open_folders">Ouvrir les dossiers</string>
+    <string name="np_favorite">Favori</string>
+    <string name="np_lyrics">Paroles</string>
+    <string name="np_queue_open">File d\'attente</string>
+    <string name="np_queue">À suivre · %1$d</string>
+    <string name="np_queue_clear">Vider</string>
+    <string name="np_close">Fermer</string>
+    <string name="np_move_up">Monter</string>
+    <string name="np_remove">Retirer</string>
+    <string name="np_info">Infos du morceau</string>
+    <string name="np_info_format">Format</string>
+    <string name="np_info_rate">Échantillonnage</string>
+    <string name="np_info_length">Durée</string>
+    <string name="np_info_year">Année</string>
+    <string name="np_info_genre">Genre</string>
+    <string name="np_info_plays">Écoutes</string>
+    <string name="np_info_file">Fichier</string>
+    <string name="np_blind">Mode aveugle</string>
+    <string name="np_blind_hint">Toucher : lecture / pause · Glisser ← → : piste · Glisser ↑ ↓ : volume</string>
+    <string name="np_blind_exit">Quitter</string>
+</resources>

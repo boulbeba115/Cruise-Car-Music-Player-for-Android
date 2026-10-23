@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lib_title">Library</string>
+    <string name="lib_tracks_count">%1$d tracks</string>
+    <string name="lib_scanning">Scanning… %1$d files</string>
+    <string name="lib_rescan">Rescan</string>
+    <string name="lib_back">Back</string>
+    <string name="lib_tab_albums">Albums</string>
+    <string name="lib_tab_artists">Artists</string>
+    <string name="lib_tab_genres">Genres</string>
+    <string name="lib_tab_tracks">Tracks</string>
+    <string name="lib_tab_years">Years</string>
+    <string name="lib_tab_quality">Quality</string>
+    <string name="lib_tab_recent">Recently added</string>
+    <string name="lib_tab_most">Most played</string>
+    <string name="lib_tab_favorites">Favourites</string>
+    <string name="lib_sort">Sort: %1$s</string>
+    <string name="sort_title">Title</string>
+    <string name="sort_artist">Artist</string>
+    <string name="sort_album">Album</string>
+    <string name="sort_year">Year</string>
+    <string name="sort_added">Date added</string>
+    <string name="sort_duration">Duration</string>
+    <string name="sort_filename">File name</string>
+    <string name="quality_hires">Hi-Res</string>
+    <string name="quality_lossless">Lossless</string>
+    <string name="quality_lossy">Compressed</string>
+    <string name="lib_play">Play</string>
+    <string name="lib_shuffle">Shuffle</string>
+    <string name="lib_albums_count">%1$d albums · %2$d tracks</string>
+    <string name="lib_detail_summary">%1$d tracks · %2$s</string>
+    <string name="lib_disc">Disc %1$d</string>
+    <string name="lib_empty_title">No music yet</string>
+    <string name="lib_empty_body">Plug in your USB stick and allow access to your music. The library fills itself in the background.</string>
+    <string name="lib_nothing_here">Nothing here yet.</string>
+    <string name="unknown_artist">Unknown artist</string>
+
+    <string name="act_play_now">Play now</string>
+    <string name="act_play_next">Play next</string>
+    <string name="act_add_queue">Add to queue</string>
+    <string name="act_add_playlist">Add to playlist…</string>
+    <string name="act_favorite">Favourite on / off</string>
+    <string name="act_go_album">Go to album</string>
+    <string name="act_go_folder">Open folder</string>
+    <string name="act_new_playlist">New playlist…</string>
+    <string name="act_choose_playlist">Add to which playlist?</string>
+
+    <string name="search_title">Search</string>
+    <string name="search_hint">Song, artist, album, folder…</string>
+    <string name="search_tracks">Tracks</string>
+    <string name="search_albums">Albums</string>
+    <string name="search_artists">Artists</string>
+    <string name="search_none">Nothing found for “%1$s”.</string>
+
+    <string name="pl_title">Playlists</string>
+    <string name="pl_new">New playlist</string>
+    <string name="pl_save_queue">Save queue as playlist</string>
+    <string name="pl_name">Playlist name</string>
+    <string name="pl_create">Create</string>
+    <string name="pl_rename">Rename</string>
+    <string name="pl_delete">Delete playlist</string>
+    <string name="pl_export">Export to USB</string>
+    <string name="pl_exported">Saved to %1$s</string>
+    <string name="pl_count">%1$d tracks</string>
+    <string name="pl_imported">From %1$s</string>
+    <string name="pl_empty">No playlists yet. Long-press any song or album to add it to one.</string>
+    <string name="pl_remove">Remove from playlist</string>
+    <string name="pl_move_up">Move up</string>
+    <string name="pl_move_down">Move down</string>
+    <string name="pl_queue_name">Drive %1$s</string>
+</resources>
