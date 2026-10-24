@@ -75,7 +75,8 @@ import kotlinx.coroutines.delay
  *
  * Over the painted foggy city (CR-22) the plane is a real one at night rather than a neon drawing: a dark silhouette
  * rim-lit by the city's teal glow, a warm cockpit, navigation lights (red beacon, green wing light, white tail light)
- * and a faint landing light ahead; the banner is dark cloth with soft lettering, the title muted teal, the artist orchid.
+ * and a faint landing light ahead; the banner is thin cloth lit from below by the city, half see-through in the haze,
+ * with quiet lettering: the title muted teal, the artist orchid.
  * While the music plays it flies: the whole tow sways and climbs gently, wind streaks rush past it and fog wisps slide
  * behind it.
  */
@@ -116,10 +117,11 @@ internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: C
 
     val titleStyle = type.display
     // Muted, not white: the title must read without outshining the painted city (owner, 2026-10-24).
-    val titleColor = lerp(cyan, Color(0xFF8FA9AD), 0.35f)
+    val titleColor = lerp(cyan, Color(0xFF8FA9AD), 0.5f)
+    val artistColor = lerp(pink, Color(0xFF9C8FA6), 0.3f)
     val titleLine = remember(shown.first, titleStyle, titleColor, density) { NeonLine.of(measurer, shown.first, titleStyle, titleColor, density) }
-    val artistLine = remember(shown.second, type.subtitle, pink, density) {
-        shown.second.takeIf { it.isNotBlank() }?.let { NeonLine.of(measurer, it, type.subtitle, pink, density) }
+    val artistLine = remember(shown.second, type.subtitle, artistColor, density) {
+        shown.second.takeIf { it.isNotBlank() }?.let { NeonLine.of(measurer, it, type.subtitle, artistColor, density) }
     }
     val bannerHeightPx = titleLine.textHeight + (artistLine?.textHeight ?: 0) + with(density) { BANNER_PAD_Y.toPx() } * 2
     val height = with(density) { max(bannerHeightPx, PLANE_W.toPx() * PLANE_RATIO).toDp() } + 30.dp
@@ -199,7 +201,8 @@ internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: C
                     drawLine(rope, ring, poleTop, ropeStroke)
                     drawLine(rope, ring, poleBottom, ropeStroke)
 
-                    drawPath(cloth, Color(0xE0081115))
+                    // Thin cloth in the haze: see-through, lit from below by the city like the fog around it.
+                    drawPath(cloth, Brush.verticalGradient(listOf(Color(0xFF15262B).copy(alpha = 0.62f), Color(0xFF2C4A53).copy(alpha = 0.66f)), startY = top, endY = top + bannerH))
                     for (i in 0 until strips) {
                         val m = (slopes[i] + slopes[i + 1]) / 2f
                         quad.reset()
@@ -208,10 +211,10 @@ internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: C
                         quad.lineTo(xs[i + 1], top + bannerH + dys[i + 1])
                         quad.lineTo(xs[i], top + bannerH + dys[i])
                         quad.close()
-                        drawPath(quad, if (m > 0f) Color.Black.copy(alpha = 0.22f * m) else Color.White.copy(alpha = -0.06f * m))
+                        drawPath(quad, if (m > 0f) Color.Black.copy(alpha = 0.16f * m) else Color(0xFFBFE3E6).copy(alpha = -0.07f * m))
                     }
                     // The cloth's edge catching the city's light, not a tube.
-                    drawPath(cloth, cyan.copy(alpha = 0.22f * glow * (0.4f + 0.6f * shownReveal)), style = clothEdge)
+                    drawPath(cloth, Color(0xFF9BC4CA).copy(alpha = 0.14f * glow * (0.4f + 0.6f * shownReveal)), style = clothEdge)
                     drawLine(Color(0xFF7D959C), poleTop, poleBottom, 2.2.dp.toPx(), StrokeCap.Round)
 
                     // The two lines of tubes, sliced along the wave.
@@ -227,7 +230,7 @@ internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: C
                             val dy = (dys[i] + dys[i + 1]) / 2f
                             val cx = x0 - (bannerLeft + padX)
                             val on = ((shownReveal * 1.15f - u) * 10f).coerceIn(0f, 1f)
-                            var a = (0.10f + 0.90f * on) * glow
+                            var a = (0.10f + 0.80f * on) * glow
                             val y = (lineTop - line.pad + dy).roundToInt()
                             if (scrolls) {
                                 val edge = min((x0 - bannerLeft) / padX, (bannerLeft + bannerW - x1) / padX).coerceIn(0f, 1f)
@@ -351,8 +354,9 @@ private class NeonLine(val image: ImageBitmap, val pad: Int, val textWidth: Int,
             CanvasDrawScope().draw(density, LayoutDirection.Ltr, Canvas(image), Size(w.toFloat(), h.toFloat())) {
                 val at = Offset(pad.toFloat(), pad.toFloat())
                 // A soft halo in the fog and a bright but not white core.
-                drawText(layout, color.copy(alpha = 0.35f), at, shadow = Shadow(color.copy(alpha = 0.6f), blurRadius = 9.dp.toPx()))
-                drawText(layout, lerp(color, Color.White, 0.22f), at, shadow = Shadow(color.copy(alpha = 0.7f), blurRadius = 3.dp.toPx()))
+                // A faint halo and a soft core: lit lettering seen through haze, not a tube.
+                drawText(layout, color.copy(alpha = 0.25f), at, shadow = Shadow(color.copy(alpha = 0.45f), blurRadius = 8.dp.toPx()))
+                drawText(layout, lerp(color, Color.White, 0.1f), at, shadow = Shadow(color.copy(alpha = 0.5f), blurRadius = 2.dp.toPx()))
             }
             return NeonLine(image, pad, layout.size.width, layout.size.height, layout.getParagraphDirection(0) == ResolvedTextDirection.Rtl)
         }

@@ -38,6 +38,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -104,6 +105,8 @@ fun NowPlayingScreen(
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     val cues = remember { GestureCues() }
+    val deckScope = rememberCoroutineScope()
+    val deck = remember(player) { DeckFx(player, deckScope) }
     val gestures = remember(player) {
         GestureActions(
             isPlaying = { player.state.value.isPlaying },
@@ -139,7 +142,7 @@ fun NowPlayingScreen(
                 if (showLyrics && l != null) {
                     LyricsPanel(l, state, audio, accent, onSeek = player::seekTo, modifier = Modifier.size(size))
                 } else {
-                    AnimatedCover(state, art, audio, accent, accent2, size)
+                    AnimatedCover(state, art, audio, accent, accent2, size, deck)
                 }
             }
         }
@@ -194,7 +197,7 @@ fun NowPlayingScreen(
 }
 
 @Composable
-private fun AnimatedCover(state: PlayerUiState, art: DecodedArtwork, audio: AudioLevels, accent: Color, accent2: Color, size: Dp) {
+private fun AnimatedCover(state: PlayerUiState, art: DecodedArtwork, audio: AudioLevels, accent: Color, accent2: Color, size: Dp, deck: DeckFx) {
     // Keyed on the decoded cover: the new art scales in over the old one once it is ready.
     val shown = art.image
     AnimatedContent(
@@ -202,7 +205,7 @@ private fun AnimatedCover(state: PlayerUiState, art: DecodedArtwork, audio: Audi
         transitionSpec = { (fadeIn(tween(320)) + scaleIn(tween(360), initialScale = 0.92f)) togetherWith fadeOut(tween(180)) },
         label = "cover",
     ) { image ->
-        SkinCover(state, image, audio, accent, accent2, size)
+        SkinCover(state, image, audio, accent, accent2, size, deck = deck)
     }
 }
 

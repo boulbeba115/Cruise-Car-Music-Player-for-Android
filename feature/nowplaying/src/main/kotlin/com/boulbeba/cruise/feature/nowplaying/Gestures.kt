@@ -93,7 +93,8 @@ private const val HOLD_MS = 520L
  *
  * Controls keep priority: the layer watches each event before the children (Initial pass) and again after them
  * (Final pass); if a child consumed it (seek bar drag, lyrics scroll) the layer steps aside. Once the layer claims a
- * gesture it consumes the events first, so the button under the finger cancels its click.
+ * gesture it consumes the events first, so the button under the finger cancels its click. A finger on a hands-on
+ * cover (the Vinyl Lounge record, the Tape Deck cassette, CR-24) belongs to the cover.
  */
 fun Modifier.nowPlayingGestures(enabled: Boolean, cues: GestureCues, actions: GestureActions, haptics: HapticFeedback): Modifier =
     if (!enabled) this else pointerInput(actions) {
@@ -116,6 +117,11 @@ fun Modifier.nowPlayingGestures(enabled: Boolean, cues: GestureCues, actions: Ge
             }
             while (true) {
                 val event = withTimeoutOrNull(32) { awaitPointerEvent(PointerEventPass.Initial) }
+                // A hands-on cover (record, tape) took this finger: its touches are its own.
+                if (CoverTouch.active && mode == Mode.Pending) {
+                    cues.cue = null
+                    return@awaitEachGesture
+                }
                 val elapsed = SystemClock.uptimeMillis() - t0
                 if (event == null) {
                     if (mode == Mode.Pending) {

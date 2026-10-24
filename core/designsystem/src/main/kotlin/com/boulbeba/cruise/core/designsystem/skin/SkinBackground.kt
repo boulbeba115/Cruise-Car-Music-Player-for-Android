@@ -285,7 +285,7 @@ private fun DrawScope.neonLights(t: Float, cyan: Color, pink: Color, horizon: Fl
 
 /**
  * The painted city alive (CR-22): searchlights on the tower tops sweeping the sky slowly, a scan of light gliding up the
- * holographic column, red aviation lights breathing on the antennas, fog banks drifting across. Everything is placed
+ * holographic column, red aviation lights breathing on the antennas, fog drifting across in two layers. Everything is placed
  * in the picture's own coordinates through the same crop as [drawCover], so it sits on the painted towers on any screen
  * shape. Slow, soft and never flashing; it only moves while the music plays.
  */
@@ -341,19 +341,60 @@ private fun DrawScope.neonNight(t: Float, image: ImageBitmap) {
         drawCircle(Color(0xFFFF7070).copy(alpha = 0.35f + 0.6f * glow), size.minDimension * 0.0028f, p)
     }
 
-    // Fog banks: three wide soft discs flattened into banks, crossing at different heights and speeds, wrapping round.
-    val fog = Color(0xFF3E6B78)
-    val banks = listOf(Triple(0.58f, 9f, 0.15f), Triple(0.72f, 14f, 0.13f), Triple(0.86f, 6f, 0.11f))
-    for ((i, bank) in banks.withIndex()) {
-        val (yFrac, speed, alpha) = bank
-        val w = size.width * 0.9f
-        val x = ((t * speed + i * size.width * 0.37f) % (size.width + w)) - w / 2
-        val y = size.height * yFrac
-        val r = w / 2
-        scale(1f, 0.28f, pivot = Offset(x, y)) {
-            drawCircle(Brush.radialGradient(listOf(fog.copy(alpha = alpha), Color.Transparent), center = Offset(x, y), radius = r), r, Offset(x, y))
+    // Fog: two layers of the same soft fog texture drifting at different heights and speeds, wrapping round.
+    val fogTex = neonFogTexture
+    for ((i, layer) in NEON_FOG_LAYERS.withIndex()) {
+        val w = (size.width * layer.width).roundToInt()
+        val h = (size.height * layer.height).roundToInt()
+        val y = (size.height * layer.top).roundToInt()
+        val x = -((t * layer.speed + i * 400f) % w).roundToInt()
+        for (k in 0..1) {
+            drawImage(fogTex, srcOffset = IntOffset.Zero, srcSize = IntSize(fogTex.width, fogTex.height), dstOffset = IntOffset(x + k * w, y), dstSize = IntSize(w, h), alpha = layer.alpha)
         }
     }
+}
+
+private class FogLayer(val top: Float, val height: Float, val width: Float, val speed: Float, val alpha: Float)
+
+/** Lower, wider and slower behind; higher, narrower and faster in front: the fog reads as depth. */
+private val NEON_FOG_LAYERS = listOf(
+    FogLayer(top = 0.38f, height = 0.5f, width = 1.7f, speed = 9f, alpha = 0.75f),
+    FogLayer(top = 0.58f, height = 0.45f, width = 1.25f, speed = 19f, alpha = 0.55f),
+)
+
+/**
+ * Fog texture, made once: fractal value noise that repeats across its width (so it can scroll forever), thinning out
+ * at the top and the bottom, in the city's fog colour. Small; drawn stretched, its smoothness hides the scale.
+ */
+private val neonFogTexture: ImageBitmap by lazy {
+    val w = 384
+    val h = 96
+    val rnd = Random(7)
+    val octaves = listOf(4 to 0.55f, 8 to 0.28f, 16 to 0.17f)
+    val grids = octaves.map { (cells, _) -> Array(cells / 4 + 2) { FloatArray(cells) { rnd.nextFloat() } } }
+    fun smooth(x: Float) = x * x * (3f - 2f * x)
+    val px = IntArray(w * h)
+    for (y in 0 until h) for (x in 0 until w) {
+        var v = 0f
+        octaves.forEachIndexed { i, (cells, amp) ->
+            val g = grids[i]
+            val rows = g.size - 1
+            val fx = x.toFloat() / w * cells
+            val fy = y.toFloat() / h * (rows - 1)
+            val x0 = fx.toInt() % cells
+            val x1 = (x0 + 1) % cells
+            val y0 = fy.toInt()
+            val tx = smooth(fx - fx.toInt())
+            val ty = smooth(fy - y0)
+            val top = g[y0][x0] + (g[y0][x1] - g[y0][x0]) * tx
+            val bottom = g[y0 + 1][x0] + (g[y0 + 1][x1] - g[y0 + 1][x0]) * tx
+            v += amp * (top + (bottom - top) * ty)
+        }
+        val envelope = sin(Math.PI.toFloat() * y / (h - 1))
+        val a = (((v - 0.32f) / 0.68f).coerceIn(0f, 1f)).let { it * it } * envelope
+        px[y * w + x] = android.graphics.Color.argb((a * 190).roundToInt(), 0x4C, 0x7A, 0x86)
+    }
+    Bitmap.createBitmap(px, w, h, Bitmap.Config.ARGB_8888).asImageBitmap()
 }
 
 /** Searchlights on the painted tower tops, as fractions of the backdrop picture (bg_neon, measured from it). */

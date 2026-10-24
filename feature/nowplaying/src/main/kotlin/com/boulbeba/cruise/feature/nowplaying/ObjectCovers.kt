@@ -8,14 +8,20 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +43,7 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -369,22 +376,30 @@ internal fun StickerCover(state: PlayerUiState, image: ImageBitmap?, audio: Audi
 /**
  * A chrome cassette (CR-07.6): smoky translucent shell, the album art is the label, the tape winds from the left reel
  * to the right one as the song plays, and each reel turns faster the less tape it holds — like a real deck.
+ *
+ * Hands on it like a tape deck (CR-24): pressing the cassette stops the tape (the pitch slides down), pulling it to the
+ * right cues forward — faster and higher, the chirp of a deck held on fast-forward — pulling it to the left rewinds,
+ * and letting go starts the tape again with a little wow. The reels follow the finger.
  */
 @Composable
-internal fun CassetteCover(state: PlayerUiState, image: ImageBitmap?, audio: AudioLevels, accent: Color, accent2: Color, size: Dp, modifier: Modifier) {
+internal fun CassetteCover(state: PlayerUiState, image: ImageBitmap?, audio: AudioLevels, accent: Color, accent2: Color, size: Dp, modifier: Modifier, deck: DeckFx? = null) {
     val art = rememberCoverBitmap(image, state)
     val text = rememberTextMeasurer()
     val title = state.title
     val artist = state.artist
     val leftAngle = remember { mutableFloatStateOf(0f) }
     val rightAngle = remember { mutableFloatStateOf(30f) }
-    val running = state.isPlaying && CruiseTheme.quality != VisualQuality.Saver
-    val progressNow = { if (state.durationMs > 0) (state.positionAt(android.os.SystemClock.elapsedRealtime()).toFloat() / state.durationMs).coerceIn(0f, 1f) else 0f }
+    // How the finger drives the reels while it holds the cassette: null = the deck's motor, 0 = stopped, ± = winding.
+    var drive by remember { mutableStateOf<Float?>(null) }
+    val running = (state.isPlaying || drive != null) && CruiseTheme.quality != VisualQuality.Saver
+    // The reel loop outlives compositions: it reads the latest state, not the one it started with.
+    val current by rememberUpdatedState(state)
+    val progressNow = { if (current.durationMs > 0) (current.positionAt(android.os.SystemClock.elapsedRealtime()).toFloat() / current.durationMs).coerceIn(0f, 1f) else 0f }
     LaunchedEffect(running) {
         if (!running) return@LaunchedEffect
         var last = withFrameNanos { it }
         while (true) withFrameNanos { now ->
-            val dt = (now - last) / 1e9f
+            val dt = (now - last) / 1e9f * (drive ?: if (current.isPlaying) 1f else 0f)
             last = now
             val p = progressNow()
             // Tape speed is constant, so angular speed ∝ 1 / pack radius.
@@ -392,10 +407,41 @@ internal fun CassetteCover(state: PlayerUiState, image: ImageBitmap?, audio: Aud
             rightAngle.floatValue = (rightAngle.floatValue + dt * 90f / (0.35f + 0.65f * p)) % 360f
         }
     }
+    val touch = if (deck == null) Modifier else Modifier.pointerInput(deck) {
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false)
+            val area = this@pointerInput.size
+            val w = area.width.coerceAtMost(area.height) * 0.98f
+            val h = w * 0.64f
+            val body = Rect(Offset((area.width - w) / 2, (area.height - h) / 2), Size(w, h))
+            if (!body.contains(down.position)) return@awaitEachGesture
+            down.consume()
+            CoverTouch.active = true
+            drive = 0f
+            deck.grab(stopMs = 420, floor = 0.3f)
+            try {
+                while (true) {
+                    val event = awaitPointerEvent()
+                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                    if (!change.pressed) break
+                    change.consume()
+                    // A third of the cassette's width pulled is full speed either way.
+                    val rate = ((change.position.x - down.position.x) / (w * 0.33f)).coerceIn(-1f, 1f)
+                    val r = if (kotlin.math.abs(rate) < 0.12f) 0f else rate
+                    drive = if (r > 0f) 1f + r * 9f else r * 12f
+                    deck.shuttle(r)
+                }
+            } finally {
+                drive = null
+                CoverTouch.active = false
+                deck.release(startSpeed = 0.6f, rampMs = 380)
+            }
+        }
+    }
     val sky = Color(0xFF5AB8FF)
     val ink = Color(0xFF141A22)
     val tape = Color(0xFF2B2E36)
-    Canvas(modifier.size(size)) {
+    Canvas(modifier.size(size).then(touch)) {
         audio.frame
         val s = this.size.minDimension
         val w = s * 0.98f

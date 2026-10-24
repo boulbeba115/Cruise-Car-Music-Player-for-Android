@@ -1,26 +1,31 @@
 package com.boulbeba.cruise.feature.nowplaying
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -30,12 +35,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
@@ -54,16 +64,27 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sin
+import kotlinx.coroutines.launch
 
 /** The cover as the active skin presents it. */
 @Composable
-fun SkinCover(state: PlayerUiState, image: ImageBitmap?, audio: AudioLevels, accent: Color, accent2: Color, size: Dp, modifier: Modifier = Modifier) {
+internal fun SkinCover(
+    state: PlayerUiState,
+    image: ImageBitmap?,
+    audio: AudioLevels,
+    accent: Color,
+    accent2: Color,
+    size: Dp,
+    modifier: Modifier = Modifier,
+    /** Lets the record and the cassette be handled (CR-24); null for previews. */
+    deck: DeckFx? = null,
+) {
     when (CruiseTheme.skin.cover) {
         CoverStyle.Sleeve -> SleeveCover(state, image, audio, accent, accent2, size, modifier)
         CoverStyle.Liquid -> LiquidCover(state, image, audio, accent, accent2, size, modifier)
         CoverStyle.Sticker -> StickerCover(state, image, audio, accent, size, modifier)
-        CoverStyle.Cassette -> CassetteCover(state, image, audio, accent, accent2, size, modifier)
-        CoverStyle.Vinyl -> VinylCover(state, image, audio, size, modifier)
+        CoverStyle.Cassette -> CassetteCover(state, image, audio, accent, accent2, size, modifier, deck)
+        CoverStyle.Vinyl -> VinylCover(state, image, audio, size, modifier, deck)
         CoverStyle.Neon -> NeonCover(state, image, audio, accent, accent2, size, modifier)
         CoverStyle.Gauge -> GaugeCover(state, image, audio, accent, accent2, size, modifier)
         CoverStyle.Minimal -> Box(modifier.size(size * 0.72f).clip(RoundedCornerShape(CruiseTheme.dimens.coverRadius * 0.6f))) { Art(image, state) }
@@ -81,6 +102,9 @@ private fun Art(image: ImageBitmap?, state: PlayerUiState) {
 /** One turn in five seconds: slower than a real record, calmer to look at while driving. */
 private const val VINYL_DEGREES_PER_SECOND = 72f
 
+/** Music under one turn of the record by hand: 1.8 s, as on a real 33⅓ rpm record. */
+private const val MS_PER_TURN = 1800f
+
 /** Where the tonearm is, carried from frame to frame so a new track glides it back to the outer groove. */
 private class ArmState {
     var angle = Float.NaN
@@ -92,17 +116,84 @@ private class ArmState {
  * owner 2026-10-24), and the tonearm behaves like a real one — it rests off the record, swings onto the outer groove
  * when the music starts, moves toward the label as the song plays, lifts on pause and glides back to the edge for the
  * next track.
+ *
+ * Hands on it like a DJ (CR-24): a finger on the record stops it (the sound brakes), turning it plays the music at the
+ * speed and pitch of the hand (backward rewinds), letting go spins it back up.
  */
 @Composable
-private fun VinylCover(state: PlayerUiState, image: ImageBitmap?, audio: AudioLevels, size: Dp, modifier: Modifier) {
+private fun VinylCover(state: PlayerUiState, image: ImageBitmap?, audio: AudioLevels, size: Dp, modifier: Modifier, deck: DeckFx?) {
     val colors = CruiseTheme.colors
     val art = rememberCoverBitmap(image, state)
     val moving = CruiseTheme.quality != VisualQuality.Saver
-    val spin = rememberSpin(state.isPlaying && moving, VINYL_DEGREES_PER_SECOND)
+    val spin = remember { mutableFloatStateOf(0f) }
+    val motor = remember { Animatable(1f) }
+    var held by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    // The motor turns the record while the music plays and no hand holds it; after a release it spins up again.
+    LaunchedEffect(state.isPlaying && moving) {
+        if (!(state.isPlaying && moving)) return@LaunchedEffect
+        var last = withFrameNanos { it }
+        while (true) withFrameNanos { now ->
+            if (!held) spin.floatValue = (spin.floatValue + (now - last) / 1e9f * VINYL_DEGREES_PER_SECOND * motor.value) % 360f
+            last = now
+        }
+    }
     val onRecord by animateFloatAsState(if (state.isPlaying || state.positionMs > 0) 1f else 0f, tween(1100), label = "armOn")
     val lift by animateFloatAsState(if (state.isPlaying) 0f else 1f, tween(500), label = "armLift")
     val arm = remember { ArmState() }
-    Canvas(modifier.size(size)) {
+    val touch = if (deck == null) Modifier else Modifier.pointerInput(deck) {
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false)
+            val area = this@pointerInput.size
+            val s = area.width.coerceAtMost(area.height).toFloat()
+            val c = Offset(s * 0.46f, s * 0.54f)
+            if ((down.position - c).getDistance() > s * 0.43f) return@awaitEachGesture
+            down.consume()
+            CoverTouch.active = true
+            held = true
+            deck.grab(stopMs = 260, floor = 0.25f)
+            fun angleOf(p: Offset) = Math.toDegrees(atan2((p.y - c.y).toDouble(), (p.x - c.x).toDouble())).toFloat()
+            var lastAngle = angleOf(down.position)
+            var lastTime = down.uptimeMillis
+            var turned = 0f
+            var velocity = 0f
+            try {
+                while (true) {
+                    // No movement for a moment: the hand holds the record still.
+                    val event = withTimeoutOrNull(120) { awaitPointerEvent() }
+                    if (event == null) {
+                        velocity = 0f
+                        deck.scrub((turned / 360f * MS_PER_TURN).toLong(), 0f)
+                        continue
+                    }
+                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                    if (!change.pressed) break
+                    change.consume()
+                    val a = angleOf(change.position)
+                    var d = a - lastAngle
+                    if (d > 180f) d -= 360f
+                    if (d < -180f) d += 360f
+                    val dt = (change.uptimeMillis - lastTime).coerceAtLeast(1)
+                    velocity = 0.5f * velocity + 0.5f * (d / dt * 1000f)
+                    lastAngle = a
+                    lastTime = change.uptimeMillis
+                    turned += d
+                    spin.floatValue = (spin.floatValue + d) % 360f
+                    // A real record: one turn is 1.8 s of music, so normal speed is a hand turning 200°/s.
+                    deck.scrub((turned / 360f * MS_PER_TURN).toLong(), velocity / (360f * 1000f / MS_PER_TURN))
+                }
+            } finally {
+                held = false
+                CoverTouch.active = false
+                deck.release(startSpeed = 0.35f, rampMs = 520)
+                if (deck.resumes) scope.launch {
+                    motor.snapTo(0.35f)
+                    motor.animateTo(1f, tween(520))
+                }
+            }
+        }
+    }
+    Canvas(modifier.size(size).then(touch)) {
         audio.frame
         val s = this.size.minDimension
         val c = Offset(s * 0.46f, s * 0.54f)

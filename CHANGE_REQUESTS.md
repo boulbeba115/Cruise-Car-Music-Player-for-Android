@@ -42,6 +42,8 @@ Status legend: ✅ done and verified on the PC (build, unit tests, screenshot te
 | [CR-21](#cr-21--phones-keep-playing-with-the-screen-off) | Phones: music keeps playing when the screen is switched off | P0 | ✅ Done · 👀 owner review |
 | [CR-22](#cr-22--neon-city-painted-backdrop-and-the-skin-toned-to-match-it) | Neon City: a painted foggy teal city, and the billboard, plane and colours toned to match it | P1 | ✅ Done · 👀 owner review |
 | [CR-23](#cr-23--vinyl-lounge-slower-record-lighter-grooves) | Vinyl Lounge: slower record, lighter grooves over the cover | P1 | ✅ Done · 👀 owner review |
+| [CR-24](#cr-24--hands-on-record-and-tape) | Hands-on record (DJ scratch) and tape (stop, cue, rewind) | P1 | ✅ Done · 👀 owner review |
+| [CR-25](#cr-25--covers-with-bars-around-the-picture) | Art with bars around the picture fills the record and the other shapes | P1 | ✅ Done · 👀 owner review |
 
 ---
 
@@ -547,6 +549,12 @@ phone's screen went off.
   - The plane flies: the tow sways and climbs gently with a slight bank, wind streaks rush past and fog wisps slide
     behind it. Nothing flashes; all of it stops when the music is paused and in the Saver quality.
 
+- Owner's review on the emulator: the banner was still too bright and its black cloth did not fit; more fog wanted.
+  - Banner: thin see-through cloth lit from below by the city (the holographic column shows through), quieter
+    lettering, a faint edge instead of an outline.
+  - Fog: a fog texture made once (fractal value noise repeating across its width) drifting in two layers at different
+    heights and speeds, instead of three soft blobs.
+
 ## CR-23 — Vinyl Lounge: slower record, lighter grooves
 
 **Status: ✅ Done · 👀 owner review** — owner (2026-10-24): the disc spins too fast, and the rings over the cover are too
@@ -554,6 +562,27 @@ strong.
 - One turn in five seconds (72°/s) instead of a real 33⅓ rpm (200°/s).
 - Grooves further apart and about a third as dark, lighter gaps between songs, a softer fixed reflection: the album
   art stays the picture.
+
+## CR-24 — Hands-on record and tape
+
+**Status: ✅ Done · 👀 owner review** — owner (2026-10-24): move the record like a DJ, and a tape effect on the cassette.
+- **Vinyl Lounge:** a finger on the record stops it — the sound brakes (speed and pitch slide down, then silence).
+  Turning it forward plays from where it was grabbed at the speed and pitch of the hand (one turn = 1.8 s of music, as on
+  a real record; 200°/s is normal speed); turning it backward rewinds; holding still is silence. Letting go spins it
+  back up, the pitch rising to normal, if it was playing.
+- **Tape Deck:** pressing the cassette stops the tape (a slower, deeper slide); pulling it right cues forward at up to
+  2.6× speed with the pitch raised (the fast-forward chirp); pulling it left rewinds; letting go starts the tape with a
+  little wow. The reels follow the finger.
+- The player cannot play audio backwards, so backward movement rewinds silently.
+- The whole-screen gestures (hold = play/pause, swipes) step aside while a finger is on the record or the cassette.
+- Speed and pitch always return to normal when the finger lifts, whatever interrupts an effect.
+
+## CR-25 — Covers with bars around the picture
+
+**Status: ✅ Done · 👀 owner review** — owner (2026-10-24, screenshot): some songs' art did not cover the whole record.
+- That art carries flat bars around the picture (common in art taken from videos). When art is decoded, rows and
+  columns at the edges that are one flat colour are trimmed (at most a third of each side, slivers ignored), so every
+  skin crops the picture itself. A cover whose design has a real flat border loses only that border.
 
 ## Execution plan
 

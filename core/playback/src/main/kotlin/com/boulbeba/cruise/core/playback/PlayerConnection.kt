@@ -6,6 +6,7 @@ import android.content.ComponentName
 import android.content.Context
 import androidx.annotation.VisibleForTesting
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -171,6 +172,21 @@ class PlayerConnection @Inject constructor(@ApplicationContext private val conte
             if (c.playbackState == Player.STATE_IDLE) c.prepare()
             c.play()
         }
+    }
+
+    fun play() = whenConnected { c ->
+        if (c.playbackState == Player.STATE_IDLE) c.prepare()
+        c.play()
+    }
+
+    fun pause() = whenConnected { it.pause() }
+
+    /**
+     * Playback speed and pitch together, like a record or a tape running faster or slower (the hands-on covers,
+     * CHANGE_REQUESTS.md CR-24). Always set back to 1 when the hand lets go.
+     */
+    fun setSpeed(speed: Float, pitch: Float = speed) {
+        controller?.playbackParameters = PlaybackParameters(speed.coerceIn(0.1f, 4f), pitch.coerceIn(0.1f, 4f))
     }
 
     fun next() = whenConnected { it.seekToNext() }
