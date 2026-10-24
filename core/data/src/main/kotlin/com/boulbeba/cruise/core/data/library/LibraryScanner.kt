@@ -1,6 +1,7 @@
 package com.boulbeba.cruise.core.data.library
 
 import android.os.Environment
+import android.os.Process
 import android.os.SystemClock
 import com.boulbeba.cruise.core.model.CruiseLog
 import com.boulbeba.cruise.core.data.artwork.ArtworkCache
@@ -13,13 +14,16 @@ import com.boulbeba.cruise.core.data.tags.PlaylistFiles
 import com.boulbeba.cruise.core.data.tags.TagReader
 import com.boulbeba.cruise.core.model.AudioFiles
 import java.io.File
+import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -31,6 +35,11 @@ data class ScanState(
     val tracks: Int = 0,
     val message: String = "",
     val lastScanMs: Long = 0,
+    /**
+     * A background refresh of a library that already has music (start-up, USB stick re-mounted): screens keep showing
+     * the cached library and say nothing about it. Only the first scan, and one the driver asked for, are shown.
+     */
+    val quiet: Boolean = false,
 )
 
 /**
@@ -45,21 +54,28 @@ class LibraryScanner @Inject constructor(
     private val artwork: ArtworkCache,
     private val settings: LibrarySettings,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    // One low-priority thread: a rescan must never slow down playback or the screens on the owner's 4-core unit.
+    private val scope = CoroutineScope(
+        SupervisorJob() + Executors.newSingleThreadExecutor { r ->
+            Thread({ Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND); r.run() }, "cruise-scan")
+        }.asCoroutineDispatcher(),
+    )
     private var job: Job? = null
 
     private val _state = MutableStateFlow(ScanState())
     val state: StateFlow<ScanState> = _state.asStateFlow()
 
-    fun scan() {
+    /** Starts a scan unless one is running; [background] scans of a library that has music are [ScanState.quiet]. */
+    fun scan(background: Boolean = false) {
         if (job?.isActive == true) return
-        job = scope.launch { runCatching { scanNow() }.onFailure { CruiseLog.log("scan", "failed: $it") } }
+        job = scope.launch { runCatching { scanNow(background) }.onFailure { CruiseLog.log("scan", "failed: $it") } }
     }
 
-    suspend fun scanNow() {
+    suspend fun scanNow(background: Boolean = false) {
         val started = SystemClock.elapsedRealtime()
         volumes.refresh()
-        _state.value = ScanState(running = true, message = "Looking for music…")
+        val quiet = background && dao.countAll().first() > 0
+        _state.value = ScanState(running = true, message = "Looking for music…", quiet = quiet)
         var seen = 0
         var read = 0
         val playlists = mutableListOf<File>()
@@ -124,7 +140,7 @@ class LibraryScanner @Inject constructor(
         importPlaylists(playlists)
         val elapsed = SystemClock.elapsedRealtime() - started
         CruiseLog.log("scan", "done: $seen files, $read read, ${elapsed / 1000} s")
-        _state.value = ScanState(running = false, filesSeen = seen, filesRead = read, message = "", lastScanMs = elapsed)
+        _state.value = ScanState(running = false, filesSeen = seen, filesRead = read, message = "", lastScanMs = elapsed, quiet = quiet)
         artwork.prepareAlbumThumbnails()
     }
 

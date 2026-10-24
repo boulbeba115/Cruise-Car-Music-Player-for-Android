@@ -20,9 +20,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
 
 /** A car feature the probe looks for, with what the driver does to make it show (CHANGE_REQUESTS.md CR-10.3). */
 enum class Feature(val title: String, val instruction: String, val needsAction: Boolean = true) {
@@ -59,6 +61,11 @@ data class ProbeStats(val mcuIds: Int = 0, val mcuMessages: Int = 0, val broadca
  * Car integration probe (CHANGE_REQUESTS.md CR-10.3): listens to everything the head unit exposes — MCU messages over
  * the vendor TWUtil link (where the CAN-bus data arrives on TW units), vendor broadcasts, system settings and
  * properties — and, step by step, matches each car feature to the signals that change while the driver uses it.
+ *
+ * The MCU link is opened the way the vendor apps do it: a few TWUtil instances, each opened once with at most 20
+ * message ids. 0.1.0 opened one instance with 4,096 ids, which crashed the app in native code on "Start listening"
+ * (CHANGE_REQUESTS.md CR-20). MCU messages arrive on the main thread; every reader takes [mcu]'s lock, so saving the
+ * report on a background thread while messages keep coming cannot fail.
  */
 @Singleton
 class CarProbe @Inject constructor(@ApplicationContext private val context: Context) {
@@ -67,7 +74,7 @@ class CarProbe @Inject constructor(@ApplicationContext private val context: Cont
 
     private val mcu = HashMap<Int, McuLog>()
     private val broadcastLog = ArrayList<Pair<Long, String>>()
-    private var bridge: TwUtilBridge? = null
+    private val bridges = ArrayList<TwUtilBridge>()
     private var receiver: BroadcastReceiver? = null
     private val handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) = onMcu(msg)
@@ -80,8 +87,8 @@ class CarProbe @Inject constructor(@ApplicationContext private val context: Cont
     private val _results = MutableStateFlow<Map<Feature, StepResult>>(emptyMap())
     val results: StateFlow<Map<Feature, StepResult>> = _results.asStateFlow()
 
-    /** MCU link opened for the wide id range; false when the unit refused it (then only known ids are watched). */
-    var wideRange = false
+    /** How many MCU message ids the open link instances watch (0: no link). */
+    var idsWatched = 0
         private set
 
     private var step: Step? = null
@@ -98,14 +105,18 @@ class CarProbe @Inject constructor(@ApplicationContext private val context: Cont
     fun start() {
         if (_running.value) return
         _running.value = true
-        if (TwUtilBridge.isAvailable) TwUtilBridge.create()?.let { b ->
-            wideRange = b.open(WIDE_IDS)
-            if (wideRange || b.open(KNOWN_IDS)) {
-                b.start()
-                b.addHandler(HANDLER_NAME, handler)
-                bridge = b
+        idsWatched = 0
+        if (TwUtilBridge.isAvailable) {
+            PROBE_IDS.toList().chunked(IDS_PER_LINK).forEachIndexed { i, ids ->
+                val b = TwUtilBridge.create() ?: return@forEachIndexed
+                if (b.open(ids.toShortArray())) {
+                    b.start()
+                    b.addHandler("$HANDLER_NAME$i", handler)
+                    bridges += b
+                    idsWatched += ids.size
+                }
             }
-            CarLog.log("probe", "MCU link ${if (bridge == null) "refused" else if (wideRange) "open, ${WIDE_IDS.size} ids" else "open, known ids only"}")
+            CarLog.log("probe", "MCU link: ${bridges.size} instances, $idsWatched ids")
         }
         receiver = object : BroadcastReceiver() {
             override fun onReceive(c: Context, intent: Intent) {
@@ -122,18 +133,20 @@ class CarProbe @Inject constructor(@ApplicationContext private val context: Cont
     fun stop() {
         receiver?.let { runCatching { context.unregisterReceiver(it) } }
         receiver = null
-        bridge?.run { removeHandler(HANDLER_NAME); stop(); close() }
-        bridge = null
+        bridges.forEachIndexed { i, b -> b.removeHandler("$HANDLER_NAME$i"); b.stop(); b.close() }
+        bridges.clear()
         _running.value = false
     }
 
     private fun onMcu(msg: Message) {
         val value = "${msg.arg1}:${msg.arg2}${msg.obj?.let { ":" + describe(it) }.orEmpty()}"
-        val log = mcu.getOrPut(msg.what) { McuLog() }
-        log.count++
-        if (value != log.lastValue) log.changedAt = SystemClock.elapsedRealtime()
-        log.lastValue = value
-        if (log.values.size < MAX_VALUES) log.values += value
+        synchronized(mcu) {
+            val log = mcu.getOrPut(msg.what) { McuLog() }
+            log.count++
+            if (value != log.lastValue) log.changedAt = SystemClock.elapsedRealtime()
+            log.lastValue = value
+            if (log.values.size < MAX_VALUES) log.values += value
+        }
         bumpStats()
     }
 
@@ -146,22 +159,28 @@ class CarProbe @Inject constructor(@ApplicationContext private val context: Cont
     }
 
     private fun bumpStats() {
-        _stats.value = ProbeStats(mcu.size, mcu.values.sumOf { it.count }, synchronized(broadcastLog) { broadcastLog.size })
+        val (ids, messages) = synchronized(mcu) { mcu.size to mcu.values.sumOf { it.count } }
+        _stats.value = ProbeStats(ids, messages, synchronized(broadcastLog) { broadcastLog.size })
     }
 
     // ---- Guided steps ----------------------------------------------------------------------------------------
 
-    fun beginStep(feature: Feature) {
+    /** Call on the main thread; the settings and properties snapshots run in the background (getprop is slow). */
+    suspend fun beginStep(feature: Feature) {
         if (!_running.value) start()
-        step = Step(feature, SystemClock.elapsedRealtime(), mcu.mapValues { it.value.values.toSet() }, settingsSnapshot(), propertiesSnapshot())
+        val startedAt = SystemClock.elapsedRealtime()
+        val values = synchronized(mcu) { mcu.mapValues { it.value.values.toSet() } }
+        val (settings, props) = withContext(Dispatchers.IO) { settingsSnapshot() to propertiesSnapshot() }
+        step = Step(feature, startedAt, values, settings, props)
     }
 
     /** Ends the current step: every MCU id that carried a new value, every broadcast, every changed setting or property. */
-    fun endStep(): StepResult? {
+    suspend fun endStep(): StepResult? {
         val s = step ?: return null
         step = null
         // A new value, or a value that changed during the step (busy ids like speed fill their value list early).
-        val mcuChanges = mcu.mapNotNull { (id, log) ->
+        val mcuNow = synchronized(mcu) { mcu.mapValues { (_, l) -> McuLog(l.count, LinkedHashSet(l.values), l.lastValue, l.changedAt) } }
+        val mcuChanges = mcuNow.mapNotNull { (id, log) ->
             val fresh = log.values - s.mcuValues[id].orEmpty()
             when {
                 fresh.isNotEmpty() -> "0x%04X (%d): %s".format(id, id, fresh.take(6).joinToString(" | "))
@@ -170,8 +189,9 @@ class CarProbe @Inject constructor(@ApplicationContext private val context: Cont
             }
         }.sorted()
         val bc = synchronized(broadcastLog) { broadcastLog.filter { it.first >= s.startedAt }.map { it.second }.distinct() }
-        val settings = diff(s.settings, settingsSnapshot())
-        val props = diff(s.properties, propertiesSnapshot())
+        val (settingsNow, propsNow) = withContext(Dispatchers.IO) { settingsSnapshot() to propertiesSnapshot() }
+        val settings = diff(s.settings, settingsNow)
+        val props = diff(s.properties, propsNow)
         return StepResult(s.feature, mcuChanges, bc, settings, props).also { r -> _results.value = _results.value + (s.feature to r) }
     }
 
@@ -198,11 +218,11 @@ class CarProbe @Inject constructor(@ApplicationContext private val context: Cont
     fun saveReport(): File? {
         val report = ProbeReport(
             device = deviceInfo(),
-            linkOpen = bridge != null || mcu.isNotEmpty(),
-            wideRange = wideRange,
+            linkOpen = bridges.isNotEmpty() || synchronized(mcu) { mcu.isNotEmpty() },
+            idsWatched = idsWatched,
             results = Feature.entries.map { f -> _results.value[f] ?: StepResult(f, emptyList(), emptyList(), emptyList(), emptyList()) },
             tested = _results.value.keys,
-            mcu = mcu.toSortedMap().map { (id, log) -> McuSummary(id, log.count, log.values.toList()) },
+            mcu = synchronized(mcu) { mcu.toSortedMap().map { (id, log) -> McuSummary(id, log.count, log.values.toList()) } },
             broadcasts = synchronized(broadcastLog) { broadcastLog.map { it.second }.distinct() },
             vendorSettings = settingsSnapshot().filterKeys { k -> VENDOR_HINTS.any { k.contains(it, ignoreCase = true) } },
             vendorProperties = propertiesSnapshot().filterKeys { k -> VENDOR_HINTS.any { k.contains(it, ignoreCase = true) } },
@@ -251,17 +271,19 @@ class CarProbe @Inject constructor(@ApplicationContext private val context: Cont
         private const val HANDLER_NAME = "CruiseWheelProbe"
         private const val MAX_VALUES = 24
 
-        /** Message ids seen in the vendor apps (docs/unit-findings.md). */
-        val KNOWN_IDS: ShortArray = TwProtocol.ids(
-            TwProtocol.KEY, TwProtocol.KEY_LONG, TwProtocol.SOURCE, 771, 1282, TwProtocol.SCREEN_STATE,
-            40448, 40449, 40451, 40452, 40456, 40457, 40458, 40465, 40704,
-        )
+        private const val IDS_PER_LINK = 20
 
         /**
-         * A wide sweep: the low command ranges (0x0100–0x07FF), their long-press/second-page variants (0x8100–0x87FF)
-         * and the 0x9E00–0x9FFF block the vendor apps use. The CAN box's data reaches apps through ids in these ranges.
+         * Every message id the unit's own apps subscribe to (SystemUI, com.tw.service, .bt, .media, .keypad, Dofun car
+         * settings; jadx 2026-10-24) plus the ones Cruise learnt from them: keys, source, now playing, climate, radio,
+         * Bluetooth, car settings — where the CAN box's data reaches the apps on TW units.
          */
-        val WIDE_IDS: ShortArray = (0x0100..0x07FF).plus(0x8100..0x87FF).plus(0x9E00..0x9FFF).let { ids -> ShortArray(ids.size) { ids[it].toShort() } }
+        val PROBE_IDS: ShortArray = TwProtocol.ids(
+            257, 258, 259, 260, 262, 264, 265, 266, 267, 272, 274, 513, 514, 515, 516, 517, 523, 528,
+            769, 770, 771, 772, 1025, 1026, 1028, 1029, 1030, 1281, 1282, 1285, 1287, 1288, 1289, 1290, 1296, 1539, 1541,
+            TwProtocol.KEY_LONG, 34057, 34058, 40448, 40449, 40451, 40452, 40456, 40457, 40458, 40465, 40476, 40477,
+            40479, 40704, 40720, 40731, TwProtocol.SCREEN_STATE,
+        )
 
         /** Broadcasts found in the vendor apps (com.tw.*, zlink, Dofun) plus the standard car-relevant ones. */
         val BROADCASTS = listOf(

@@ -142,16 +142,18 @@ private fun LibraryHeader(
         if (searching) {
             SearchField(query, onQuery, onClose = onCloseSearch, modifier = Modifier.weight(1f))
         } else {
+            // Background refreshes stay silent: the cached library is what the driver sees.
+            val shownScanning = scan.running && !scan.quiet
             Column(Modifier.weight(1f)) {
                 Text(skinTitle(stringResource(R.string.lib_title)), style = CruiseTheme.typography.title, color = colors.textPrimary)
                 Text(
-                    if (scan.running) stringResource(R.string.lib_scanning, scan.filesSeen) else stringResource(R.string.lib_tracks_count, count),
-                    style = CruiseTheme.typography.meta, color = if (scan.running) colors.accent else colors.textSecondary,
+                    if (shownScanning) stringResource(R.string.lib_scanning, scan.filesSeen) else stringResource(R.string.lib_tracks_count, count),
+                    style = CruiseTheme.typography.meta, color = if (shownScanning) colors.accent else colors.textSecondary,
                 )
             }
             CruiseIconButton(CruiseIcons.Search, stringResource(R.string.lib_search), onClick = onSearch, size = CruiseTheme.dimens.minTouchTarget, tint = colors.textPrimary)
             Spacer(Modifier.width(8.dp))
-            CruiseIconButton(CruiseIcons.Refresh, stringResource(R.string.lib_rescan), onClick = vm::rescan, size = CruiseTheme.dimens.minTouchTarget, tint = if (scan.running) colors.accent else colors.textSecondary)
+            CruiseIconButton(CruiseIcons.Refresh, stringResource(R.string.lib_rescan), onClick = vm::rescan, size = CruiseTheme.dimens.minTouchTarget, tint = if (shownScanning) colors.accent else colors.textSecondary)
         }
     }
 }

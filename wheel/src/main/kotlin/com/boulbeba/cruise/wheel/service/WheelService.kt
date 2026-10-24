@@ -1,5 +1,6 @@
 package com.boulbeba.cruise.wheel.service
 
+import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -31,6 +32,7 @@ import com.boulbeba.cruise.wheel.engine.Press
 import com.boulbeba.cruise.wheel.engine.RuleStore
 import com.boulbeba.cruise.wheel.engine.Trigger
 import com.boulbeba.cruise.wheel.engine.WheelKeys
+import com.boulbeba.cruise.wheel.engine.codes
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,22 +40,50 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-/** What the wheel service sees, for the screens: the latest buttons and whether the MCU link is up. */
+/** One message from the unit's MCU link, as received (the key log in Settings → Advanced). */
+data class RawMessage(val what: Int, val arg1: Int, val arg2: Int, val timeMs: Long)
+
+/** A trigger the engine recognised, and whether a rule handled it. */
+data class Fired(val trigger: Trigger, val handled: Boolean, val timeMs: Long)
+
+/** What the wheel service sees, for the screens. */
 object WheelState {
     private val _keys = MutableStateFlow<List<KeyInput>>(emptyList())
     /** Most recent buttons, newest last. */
     val keys: StateFlow<List<KeyInput>> = _keys.asStateFlow()
+
+    private val _raw = MutableStateFlow<List<RawMessage>>(emptyList())
+    /** Most recent MCU messages, newest last. */
+    val raw: StateFlow<List<RawMessage>> = _raw.asStateFlow()
+
+    /** The service is running. */
+    val running = MutableStateFlow(false)
+
+    /** The MCU link is open: the wheel is being read. */
     val connected = MutableStateFlow(false)
-    val lastTrigger = MutableStateFlow<Trigger?>(null)
+    val lastFired = MutableStateFlow<Fired?>(null)
 
     internal fun record(input: KeyInput) = _keys.update { (it + input).takeLast(12) }
+
+    internal fun record(raw: RawMessage) = _raw.update { (it + raw).takeLast(60) }
+
+    /** Screenshot tests share this object between tests. */
+    internal fun clearForTests() {
+        _keys.value = emptyList()
+        _raw.value = emptyList()
+        lastFired.value = null
+    }
 }
 
 /**
  * Cruise Wheel's foreground service (CHANGE_REQUESTS.md CR-10.1): listens to the wheel buttons through the unit's MCU
- * link, recognises taps, holds, double taps and combinations, and runs the user's rules. Buttons a rule handles stop
- * doing the unit's own thing: the phone button through the unit's HiCar hand-over flag, the others by closing the
- * vendor screen they open (accessibility helper). Re-sends what it learns on the [CarBus].
+ * link, recognises taps, holds and double taps, and runs the user's rules. Buttons a rule handles stop doing the
+ * unit's own thing where the unit allows it: the phone button through the unit's HiCar hand-over flag, the mixer by
+ * closing the screen it opens (accessibility helper). Re-sends what it learns on the [CarBus].
+ *
+ * Staying alive (CR-19): started by the app, at boot, when a USB stick is mounted, by Cruise, and by the process
+ * starting for the accessibility helper; restarted when its task is swiped away; and the unit is asked not to
+ * force-stop apps at ignition-off ([KillGuard]) once the driver has agreed to it.
  */
 @AndroidEntryPoint
 class WheelService : Service() {
@@ -75,13 +105,15 @@ class WheelService : Service() {
     override fun onCreate() {
         super.onCreate()
         startForeground(NOTIFICATION_ID, notification())
+        WheelState.running.value = true
+        if (rules.keepAlive && !KillGuard.isOn()) KillGuard.turnOn()
         calls.start()
         connect()
         listen(Intent.ACTION_SCREEN_ON, Intent.ACTION_SCREEN_OFF, ACC_ON, ACC_OFF, LIGHTS_ON, LIGHTS_OFF) { intent ->
             when (intent.action) {
                 Intent.ACTION_SCREEN_ON -> { claimPhoneButton(); CarBus.send(this, CarBus.TYPE_IGNITION, "on") }
                 Intent.ACTION_SCREEN_OFF -> CarBus.send(this, CarBus.TYPE_IGNITION, "off")
-                ACC_ON -> CarBus.send(this, CarBus.TYPE_IGNITION, "on")
+                ACC_ON -> { claimPhoneButton(); CarBus.send(this, CarBus.TYPE_IGNITION, "on") }
                 ACC_OFF -> CarBus.send(this, CarBus.TYPE_IGNITION, "off")
                 LIGHTS_ON -> CarBus.send(this, CarBus.TYPE_LIGHTS, "on")
                 LIGHTS_OFF -> CarBus.send(this, CarBus.TYPE_LIGHTS, "off")
@@ -94,6 +126,18 @@ class WheelService : Service() {
         return START_STICKY
     }
 
+    /** Swiped away from the recent apps: come back two seconds later. */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        val restart = Intent(this, WheelService::class.java)
+        val pending = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(this, 1, restart, PendingIntent.FLAG_IMMUTABLE)
+        } else {
+            PendingIntent.getService(this, 1, restart, PendingIntent.FLAG_IMMUTABLE)
+        }
+        getSystemService(AlarmManager::class.java).set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + 2_000, pending)
+        super.onTaskRemoved(rootIntent)
+    }
+
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
         receivers.forEach { runCatching { unregisterReceiver(it) } }
@@ -104,6 +148,7 @@ class WheelService : Service() {
         }
         bridge = null
         WheelState.connected.value = false
+        WheelState.running.value = false
         super.onDestroy()
     }
 
@@ -126,21 +171,23 @@ class WheelService : Service() {
     }
 
     private fun onMcu(msg: Message) {
+        val now = SystemClock.elapsedRealtime()
+        WheelState.record(RawMessage(msg.what, msg.arg1, msg.arg2, now))
         when (msg.what) {
             TwProtocol.KEY, TwProtocol.KEY_LONG -> {
+                // The vendor key service reads arg1 == 1 as a short press and anything else as long.
                 val press = when {
                     msg.what == TwProtocol.KEY_LONG || msg.arg1 == 2 -> Press.Long
                     msg.arg1 == 1 -> Press.Short
                     else -> return
                 }
-                onKey(KeyInput(msg.arg2, press, SystemClock.elapsedRealtime()))
+                onKey(KeyInput(msg.arg2, press, now))
             }
             TwProtocol.SOURCE -> CarBus.send(this, CarBus.TYPE_SOURCE, msg.arg1.toString())
         }
     }
 
-    /** Public entry for tests and the screens' "try it" button. */
-    fun onKey(input: KeyInput) {
+    private fun onKey(input: KeyInput) {
         WheelState.record(input)
         CarBus.send(this, CarBus.TYPE_KEY, if (input.press == Press.Long) "long" else "short", input.code)
         // A ringing or active call comes first on the phone button, whatever the rules say.
@@ -152,14 +199,17 @@ class WheelService : Service() {
             }
         }
         handle(engine.onInput(input))
+        // The unit forgets the hand-over flag when its own service restarts: renew it after every phone press.
+        if (input.code == WheelKeys.PHONE) claimPhoneButton()
     }
 
     private fun handle(triggers: List<Trigger>) {
         for (t in triggers) {
-            WheelState.lastTrigger.value = t
-            CarBus.send(this, CarBus.TYPE_TRIGGER, describe(t), codes(t).first())
-            val rule = rules.ruleFor(t) ?: continue
-            codes(t).firstNotNullOfOrNull(WheelKeys::vendorScreen)?.let(VendorScreenSuppressor::expect)
+            CarBus.send(this, CarBus.TYPE_TRIGGER, describe(t), t.codes.first())
+            val rule = rules.ruleFor(t)
+            WheelState.lastFired.value = Fired(t, rule != null, SystemClock.elapsedRealtime())
+            if (rule == null) continue
+            t.codes.firstNotNullOfOrNull(WheelKeys::vendorScreen)?.let(VendorScreenSuppressor::expect)
             runner.run(rule)
         }
         handler.removeCallbacks(tick)
@@ -169,11 +219,11 @@ class WheelService : Service() {
     /**
      * The unit's key service opens its Bluetooth screen for the phone button unless a HiCar phone is "connected"; the
      * flag is set by an unprotected broadcast and used for nothing else (docs/unit-findings.md). Claimed while a rule
-     * uses the phone button; renewed on every screen-on because the service forgets it when it restarts.
+     * uses the phone button; renewed on screen-on and ignition-on because the service forgets it when it restarts.
      */
     private fun claimPhoneButton() {
         if (!TwUtilBridge.isAvailable) return
-        val usesPhone = rules.rules.value.any { WheelKeys.PHONE in codes(it.trigger) }
+        val usesPhone = rules.rules.value.any { WheelKeys.PHONE in it.trigger.codes }
         sendBroadcast(Intent(if (usesPhone) HICAR_CONNECTED else HICAR_DISCONNECTED))
     }
 
@@ -214,12 +264,8 @@ class WheelService : Service() {
         const val LIGHTS_ON = "com.zjinnova.zlink.action.OUT_DARK_START"
         const val LIGHTS_OFF = "com.zjinnova.zlink.action.OUT_DARK_STOP"
 
-        fun codes(t: Trigger): List<Int> = when (t) {
-            is Trigger.Tap -> listOf(t.code)
-            is Trigger.Hold -> listOf(t.code)
-            is Trigger.DoubleTap -> listOf(t.code)
-            is Trigger.Combo -> listOf(t.first, t.second)
-        }
+        /** Sent by Cruise when it starts (CruiseApplication.wakeWheel). */
+        const val ACTION_START = "com.boulbeba.cruise.wheel.action.START"
 
         fun describe(t: Trigger): String = when (t) {
             is Trigger.Tap -> "tap"
@@ -228,18 +274,24 @@ class WheelService : Service() {
             is Trigger.Combo -> "combo:${t.second}"
         }
 
-        fun start(context: Context) = ContextCompat.startForegroundService(context, Intent(context, WheelService::class.java))
+        fun start(context: Context) {
+            runCatching { ContextCompat.startForegroundService(context, Intent(context, WheelService::class.java)) }
+                .onFailure { CarLog.log("wheel", "service start refused: $it") }
+        }
     }
 }
 
-/** Starts the service with the unit. */
+/** Starts the service with the unit, when a USB stick is mounted (the unit waking up), and when Cruise starts. */
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action !in START_ACTIONS) return
-        runCatching { WheelService.start(context) }
+        WheelService.start(context)
     }
 
     private companion object {
-        val START_ACTIONS = setOf(Intent.ACTION_BOOT_COMPLETED, "android.intent.action.QUICKBOOT_POWERON", Intent.ACTION_MY_PACKAGE_REPLACED)
+        val START_ACTIONS = setOf(
+            Intent.ACTION_BOOT_COMPLETED, "android.intent.action.QUICKBOOT_POWERON", Intent.ACTION_MY_PACKAGE_REPLACED,
+            Intent.ACTION_MEDIA_MOUNTED, WheelService.ACC_ON, WheelService.ACTION_START,
+        )
     }
 }

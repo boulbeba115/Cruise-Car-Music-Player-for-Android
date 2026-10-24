@@ -22,10 +22,19 @@ import com.boulbeba.cruise.wheel.ui.WheelApp
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
 
+/**
+ * Whatever starts the process — the launcher, a start broadcast, the system binding the accessibility helper at boot —
+ * also starts the wheel service, so the buttons work without opening the app (CHANGE_REQUESTS.md CR-19).
+ */
 @HiltAndroidApp
-class WheelApplication : Application()
+class WheelApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        WheelService.start(this)
+    }
+}
 
-/** Cruise Wheel's single screen; starting it also (re)starts the wheel service. */
+/** Cruise Wheel's screens; opening it also (re)starts the wheel service. */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 

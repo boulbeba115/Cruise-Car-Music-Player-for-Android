@@ -41,6 +41,8 @@
                 android:value="Reads the car's steering-wheel buttons from the head unit and runs the user's button rules." />
         </service>
 
+        <!-- Everything that may (re)start the service: boot, update, the unit waking (USB stick mounted, ignition
+             broadcast) and Cruise starting (explicit, reaches the app even after the unit force-stopped it). -->
         <receiver
             android:name=".service.BootReceiver"
             android:exported="true">
@@ -48,6 +50,12 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="com.android.action_acc_on" />
+                <action android:name="com.boulbeba.cruise.wheel.action.START" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_MOUNTED" />
+                <data android:scheme="file" />
             </intent-filter>
         </receiver>
     </application>

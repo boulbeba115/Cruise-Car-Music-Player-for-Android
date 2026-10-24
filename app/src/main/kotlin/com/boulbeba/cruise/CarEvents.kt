@@ -37,7 +37,7 @@ class CarEvents @Inject constructor(
             override fun onReceive(c: Context, intent: Intent) {
                 CruiseLog.log("storage", "${intent.action} ${intent.data}")
                 volumes.refresh()
-                if (intent.action == Intent.ACTION_MEDIA_MOUNTED && settings.autoScan) scanner.scan()
+                if (intent.action == Intent.ACTION_MEDIA_MOUNTED && settings.autoScan) scanner.scan(background = true)
             }
         }
         val storageFilter = IntentFilter().apply {
@@ -60,10 +60,11 @@ class CarEvents @Inject constructor(
             context, lights, IntentFilter().apply { addAction(HEADLIGHTS_ON); addAction(HEADLIGHTS_OFF) }, ContextCompat.RECEIVER_EXPORTED,
         )
 
-        // Let the first frame and the playback resume go first; then bring the library up to date.
+        // Let the first frame and the playback resume go first; then bring the library up to date without a word on
+        // screen: the cached library is shown meanwhile, and only new or changed files are read.
         if (settings.autoScan) scope.launch {
-            delay(2_500)
-            scanner.scan()
+            delay(STARTUP_SCAN_DELAY_MS)
+            scanner.scan(background = true)
         }
     }
 
@@ -74,6 +75,7 @@ class CarEvents @Inject constructor(
     }
 
     companion object {
+        private const val STARTUP_SCAN_DELAY_MS = 8_000L
         const val HEADLIGHTS_ON = "com.zjinnova.zlink.action.OUT_DARK_START"
         const val HEADLIGHTS_OFF = "com.zjinnova.zlink.action.OUT_DARK_STOP"
     }

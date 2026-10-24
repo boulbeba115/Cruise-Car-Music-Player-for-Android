@@ -12,7 +12,7 @@ data class McuSummary(val id: Int, val count: Int, val values: List<String>)
 data class ProbeReport(
     val device: Map<String, String>,
     val linkOpen: Boolean,
-    val wideRange: Boolean,
+    val idsWatched: Int,
     val results: List<StepResult>,
     val tested: Set<Feature>,
     val mcu: List<McuSummary>,
@@ -35,7 +35,7 @@ data class ProbeReport(
     fun toJson(): String = JSONObject().apply {
         put("device", JSONObject(device as Map<*, *>))
         put("mcuLinkOpen", linkOpen)
-        put("mcuWideRange", wideRange)
+        put("mcuIdsWatched", idsWatched)
         put("score", score)
         put("features", JSONArray(results.map { r ->
             JSONObject()
@@ -63,7 +63,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{border-bottom:1px
 .yes{color:#2de1c2;font-weight:700}.no{color:#ff6b8b}.skip{color:#9aa4b1}code{font-size:12px;color:#c8d2de;word-break:break-all}
 </style></head><body>""")
         append("<h1>Car integration report</h1><p class=\"muted\">${esc(device["manufacturer"].orEmpty())} ${esc(device["model"].orEmpty())} · ${esc(device["android"].orEmpty())}</p>")
-        append("<div class=\"score\">$score %</div><p class=\"muted\">of the ${tested.size} tested features show up on this unit. MCU link: ${if (linkOpen) "open" else "not available"}${if (wideRange) " (wide range)" else ""}.</p>")
+        append("<div class=\"score\">$score %</div><p class=\"muted\">of the ${tested.size} tested features show up on this unit. MCU link: ${if (linkOpen) "open" else "not available"}${if (linkOpen) " ($idsWatched message ids watched)" else ""}.</p>")
         append("<h2>Features</h2><table><tr><th>Feature</th><th>Result</th><th>Signals</th><th>What apps can do</th></tr>")
         for (r in results) {
             val status = when {

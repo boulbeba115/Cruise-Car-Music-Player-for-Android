@@ -25,8 +25,18 @@ class TwUtilBridge private constructor(private val instance: Any, private val ty
             .getOrNull()
     }
 
-    /** Subscribes to message ids; returns true on success (the vendor API returns 0). */
-    fun open(ids: ShortArray): Boolean = call("open", arrayOf(ShortArray::class.java), ids) == 0
+    /**
+     * Subscribes to message ids; returns true on success (the vendor API returns 0). Call it once per instance, with
+     * at most [MAX_IDS] ids: the vendor apps never pass more than 23, and the native side crashed the process (no
+     * exception to catch) when Cruise Wheel's probe passed 4,096. Use more instances for more ids.
+     */
+    fun open(ids: ShortArray): Boolean {
+        if (ids.isEmpty() || ids.size > MAX_IDS) {
+            CarLog.log("tw", "open refused: ${ids.size} ids (max $MAX_IDS)")
+            return false
+        }
+        return call("open", arrayOf(ShortArray::class.java), ids) == 0
+    }
 
     fun start() { call("start", emptyArray()) }
 
@@ -52,6 +62,9 @@ class TwUtilBridge private constructor(private val instance: Any, private val ty
 
     companion object {
         private const val CLASS_NAME = "android.tw.john.TWUtil"
+
+        /** Largest id list per [open]; the vendor apps' largest is 23. */
+        const val MAX_IDS = 24
 
         val isAvailable: Boolean by lazy { runCatching { Class.forName(CLASS_NAME) }.isSuccess }
 

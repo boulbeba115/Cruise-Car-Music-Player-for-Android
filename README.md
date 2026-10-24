@@ -171,8 +171,9 @@ reference head unit are in [docs/unit-findings.md](docs/unit-findings.md).
 
 ## Roadmap
 
-- **Cruise Wheel**: a separate app that takes over the steering-wheel buttons (short, long, double press, combinations)
-  and reports which car features the head unit exposes — see [CHANGE_REQUESTS.md](CHANGE_REQUESTS.md) CR-10
+- **Cruise Wheel** (experimental, in Releases): a separate app that gives the steering-wheel buttons new jobs (press,
+  hold, double press: music, volume, calls, open an app, home/back) and reports which car features the head unit
+  exposes — see [CHANGE_REQUESTS.md](CHANGE_REQUESTS.md) CR-10 and CR-18
 - APE, WavPack, DSF and WMA through a custom FFmpeg build
 - Crossfade, parametric EQ, floating mini controller
 

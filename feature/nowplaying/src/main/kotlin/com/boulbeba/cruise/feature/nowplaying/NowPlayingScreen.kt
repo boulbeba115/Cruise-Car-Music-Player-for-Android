@@ -125,7 +125,7 @@ fun NowPlayingScreen(
             val granted by StorageAccess.granted.collectAsStateWithLifecycle()
             val scan by viewModel.scan.collectAsStateWithLifecycle()
             val count by viewModel.trackCount.collectAsStateWithLifecycle()
-            EmptyState(granted, scanning = scan.running, filesSeen = scan.filesSeen, hasMusic = count > 0)
+            EmptyState(granted, firstScan = scan.running && !scan.quiet && count == 0, filesSeen = scan.filesSeen, hasMusic = count > 0)
             return@BoxWithConstraints
         }
         val portrait = CruiseTheme.layout.isPortrait
@@ -322,10 +322,11 @@ private fun TrackPanel(
 /**
  * Before the first song is ready (CHANGE_REQUESTS.md CR-03): music being found, or none yet. Never sends the driver
  * elsewhere: as soon as the library has music the player loads a song and this screen goes away. Missing storage access
- * is shown by the app shell as a banner over the player, not here (CR-12).
+ * is shown by the app shell as a banner over the player, not here (CR-12). "Finding your music" with a count is only
+ * for the very first scan (CR-17); with a library known from before, the player just gets a song ready.
  */
 @Composable
-private fun EmptyState(granted: Boolean, scanning: Boolean, filesSeen: Int, hasMusic: Boolean) {
+private fun EmptyState(granted: Boolean, firstScan: Boolean, filesSeen: Int, hasMusic: Boolean) {
     val colors = CruiseTheme.colors
     Column(Modifier.fillMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Box(
@@ -333,19 +334,20 @@ private fun EmptyState(granted: Boolean, scanning: Boolean, filesSeen: Int, hasM
             contentAlignment = Alignment.Center,
         ) {
             when {
-                granted && (scanning || hasMusic) -> CircularProgressIndicator(color = colors.accent, strokeWidth = 5.dp, modifier = Modifier.size(72.dp))
+                granted && (firstScan || hasMusic) -> CircularProgressIndicator(color = colors.accent, strokeWidth = 5.dp, modifier = Modifier.size(72.dp))
                 else -> Icon(painterResource(CruiseIcons.Library), contentDescription = null, tint = colors.accent, modifier = Modifier.size(72.dp))
             }
         }
         Spacer(Modifier.height(24.dp))
         val (title, body) = when {
-            granted && (scanning || hasMusic) -> R.string.np_looking_title to R.string.np_looking_body
+            granted && hasMusic && !firstScan -> R.string.np_preparing_title to R.string.np_looking_body
+            granted && firstScan -> R.string.np_looking_title to R.string.np_looking_body
             else -> R.string.np_no_music_title to R.string.np_no_music_body
         }
         Text(skinTitle(stringResource(title)), style = CruiseTheme.typography.title, color = colors.textPrimary, textAlign = TextAlign.Center)
         Spacer(Modifier.height(8.dp))
         Text(
-            if (granted && scanning && filesSeen > 0) stringResource(R.string.np_looking_count, filesSeen) else stringResource(body),
+            if (granted && firstScan && filesSeen > 0) stringResource(R.string.np_looking_count, filesSeen) else stringResource(body),
             style = CruiseTheme.typography.body, color = colors.textSecondary, textAlign = TextAlign.Center,
         )
     }

@@ -58,6 +58,10 @@ data class PlayerUiState(
 /**
  * The UI's handle on the playback service: a [MediaController] exposed as a [StateFlow]. Connect while the
  * activity is visible; playback itself lives in the service and continues without it.
+ *
+ * Until the controller connects (a cold start takes a few seconds on the owner's unit) the state is the last song
+ * shown, from a small snapshot, so Now Playing opens on it at once instead of a loading screen; play/pause, next,
+ * previous and seek pressed meanwhile are carried out as soon as the controller is there.
  */
 @Singleton
 class PlayerConnection @Inject constructor(@ApplicationContext private val context: Context) {
@@ -65,8 +69,10 @@ class PlayerConnection @Inject constructor(@ApplicationContext private val conte
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var controller: MediaController? = null
     private var ticker: Job? = null
+    private val snapshot = context.getSharedPreferences("player_snapshot", Context.MODE_PRIVATE)
+    private val pending = ArrayList<(MediaController) -> Unit>()
 
-    private val _state = MutableStateFlow(PlayerUiState())
+    private val _state = MutableStateFlow(loadSnapshot())
     val state: StateFlow<PlayerUiState> = _state.asStateFlow()
 
     private val _queue = MutableStateFlow<List<String>>(emptyList())
@@ -82,6 +88,8 @@ class PlayerConnection @Inject constructor(@ApplicationContext private val conte
             controller = c
             c.addListener(listener)
             refresh()
+            pending.forEach { it(c) }
+            pending.clear()
         }, MoreExecutors.directExecutor())
     }
 
@@ -95,6 +103,7 @@ class PlayerConnection @Inject constructor(@ApplicationContext private val conte
 
     fun disconnect() {
         ticker?.cancel()
+        saveSnapshot(_state.value, force = true)
         controller?.run {
             removeListener(listener)
             release()
@@ -157,21 +166,26 @@ class PlayerConnection @Inject constructor(@ApplicationContext private val conte
         if (current > 0) c.removeMediaItems(0, current)
     }
 
-    fun playPause() {
-        val c = controller ?: return
+    fun playPause() = whenConnected { c ->
         if (c.isPlaying) c.pause() else {
             if (c.playbackState == Player.STATE_IDLE) c.prepare()
             c.play()
         }
     }
 
-    fun next() { controller?.seekToNext() }
+    fun next() = whenConnected { it.seekToNext() }
 
-    fun previous() { controller?.seekToPrevious() }
+    fun previous() = whenConnected { it.seekToPrevious() }
 
     fun seekTo(positionMs: Long) {
-        controller?.seekTo(positionMs)
+        whenConnected { it.seekTo(positionMs) }
         _state.update { it.copy(positionMs = positionMs) }
+    }
+
+    /** Runs [action] now, or once the controller has connected (the snapshot is on screen meanwhile). */
+    private fun whenConnected(action: (MediaController) -> Unit) {
+        val c = controller
+        if (c != null) action(c) else if (enabled) pending += action
     }
 
     fun toggleShuffle() {
@@ -205,6 +219,7 @@ class PlayerConnection @Inject constructor(@ApplicationContext private val conte
         val meta: MediaMetadata = c.mediaMetadata
         val path = item?.mediaId
         val artwork = meta.artworkData
+        val before = _state.value
         _state.value = PlayerUiState(
             connected = true,
             hasMedia = item != null,
@@ -224,6 +239,7 @@ class PlayerConnection @Inject constructor(@ApplicationContext private val conte
             positionSampledAt = android.os.SystemClock.elapsedRealtime(),
             libraryPath = path?.let(MediaIds::libraryPath),
         )
+        saveSnapshot(_state.value, force = before.libraryPath != _state.value.libraryPath || before.title != _state.value.title)
         if (_queue.value.size != c.mediaItemCount || _queue.value.getOrNull(c.currentMediaItemIndex) != path) {
             _queue.value = List(c.mediaItemCount) { c.getMediaItemAt(it).mediaId }
         }
@@ -239,6 +255,55 @@ class PlayerConnection @Inject constructor(@ApplicationContext private val conte
             }
         }
     }
+
+    // ---- Snapshot ----------------------------------------------------------------------------------------
+
+    /** Kept when the song changes and when the screen goes away; a few short strings, so cheap to write. */
+    private fun saveSnapshot(s: PlayerUiState, force: Boolean) {
+        if (!force || !enabled || !s.connected) return
+        if (!s.hasMedia) {
+            snapshot.edit().clear().apply()
+            return
+        }
+        snapshot.edit()
+            .putString(K_PATH, s.path).putString(K_LIBRARY_PATH, s.libraryPath)
+            .putString(K_TITLE, s.title).putString(K_ARTIST, s.artist).putString(K_ALBUM, s.album)
+            .putLong(K_POSITION, s.positionMs).putLong(K_DURATION, s.durationMs)
+            .putBoolean(K_SHUFFLE, s.shuffle).putInt(K_REPEAT, s.repeatMode)
+            .putInt(K_INDEX, s.queueIndex).putInt(K_SIZE, s.queueSize)
+            .apply()
+    }
+
+    private fun loadSnapshot(): PlayerUiState {
+        if (!enabled) return PlayerUiState()
+        val path = snapshot.getString(K_PATH, null) ?: return PlayerUiState()
+        return PlayerUiState(
+            connected = false,
+            hasMedia = true,
+            path = path,
+            title = snapshot.getString(K_TITLE, null).orEmpty(),
+            artist = snapshot.getString(K_ARTIST, null).orEmpty(),
+            album = snapshot.getString(K_ALBUM, null).orEmpty(),
+            positionMs = snapshot.getLong(K_POSITION, 0),
+            durationMs = snapshot.getLong(K_DURATION, 0),
+            shuffle = snapshot.getBoolean(K_SHUFFLE, false),
+            repeatMode = snapshot.getInt(K_REPEAT, Player.REPEAT_MODE_OFF),
+            queueIndex = snapshot.getInt(K_INDEX, 0),
+            queueSize = snapshot.getInt(K_SIZE, 0),
+            libraryPath = snapshot.getString(K_LIBRARY_PATH, null),
+        )
+    }
 }
 
 private const val POSITION_RESYNC_MS = 5_000L
+private const val K_PATH = "path"
+private const val K_LIBRARY_PATH = "libraryPath"
+private const val K_TITLE = "title"
+private const val K_ARTIST = "artist"
+private const val K_ALBUM = "album"
+private const val K_POSITION = "position"
+private const val K_DURATION = "duration"
+private const val K_SHUFFLE = "shuffle"
+private const val K_REPEAT = "repeat"
+private const val K_INDEX = "index"
+private const val K_SIZE = "size"

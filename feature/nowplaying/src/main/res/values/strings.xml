@@ -31,6 +31,7 @@
     <string name="np_access_grant">Allow access</string>
     <string name="np_looking_title">Finding your music</string>
     <string name="np_looking_body">A song will be ready in a moment.</string>
+    <string name="np_preparing_title">Getting your music ready</string>
     <string name="np_looking_count">%1$d songs found so far…</string>
     <string name="np_no_music_title">No music found yet</string>
     <string name="np_no_music_body">Cruise plays music from the internal storage, SD cards and USB sticks. Add music to any of them and it starts here.</string>

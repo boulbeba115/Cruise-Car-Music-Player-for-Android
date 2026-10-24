@@ -84,7 +84,8 @@ fun SkinBackground(modifier: Modifier = Modifier, coverAccent: Color? = null, co
     val texture = rememberSkinTexture(skin.id)
     Spacer(
         modifier.drawWithCache {
-            val city = if (style == BackgroundStyle.NeonCity) NeonCity(size, colors.accent, colors.accent2, colors.warning) else null
+            // With its painted backdrop (CR-22) Neon City only adds the moving lights; the drawn city is the fallback.
+            val city = if (style == BackgroundStyle.NeonCity && texture == null) NeonCity(size, colors.accent, colors.accent2, colors.warning) else null
             val tile = when (style) {
                 BackgroundStyle.Carbon -> ShaderBrush(ImageShader(carbonTile(), TileMode.Repeated, TileMode.Repeated))
                 BackgroundStyle.Felt -> ShaderBrush(ImageShader(feltTile(), TileMode.Repeated, TileMode.Repeated))
@@ -100,7 +101,7 @@ fun SkinBackground(modifier: Modifier = Modifier, coverAccent: Color? = null, co
                 }
                 when (style) {
                     BackgroundStyle.CoverGlow -> coverGlow(t, accent, deep)
-                    BackgroundStyle.NeonCity -> city!!.draw(this, t)
+                    BackgroundStyle.NeonCity -> city?.draw(this, t) ?: neonLights(t, colors.accent, colors.accent2, size.height * NEON_HORIZON)
                     BackgroundStyle.Carbon -> carbonDash(t, tile.takeIf { texture == null }, colors.accent, colors.accent2)
                     BackgroundStyle.Felt -> felt(t, tile.takeIf { texture == null }, colors.textPrimary, colors.accent2)
                     BackgroundStyle.Aurora -> aurora(t, colors.accent, colors.accent2)
@@ -140,7 +141,7 @@ private fun DrawScope.coverGlow(t: Float, accent: Color, deep: Color) {
  * neon signs (one short dip every several seconds, far below the 3 flashes/s limit) and their shimmering reflections.
  */
 private class NeonCity(size: Size, private val cyan: Color, private val pink: Color, private val amber: Color) {
-    private val horizon = size.height * 0.72f
+    private val horizon = size.height * NEON_HORIZON
     private val scene: ImageBitmap
     private val signs = ArrayList<Sign>()
 
@@ -239,20 +240,7 @@ private class NeonCity(size: Size, private val cyan: Color, private val pink: Co
             sign(s, lit, stroke, mirrored = false)
             sign(s, lit * 0.35f, stroke, mirrored = true, wobble = sin(t * 1.7f + s.phase) * stroke * 2.5f)
         }
-        // Light streaks on the wet street, drifting slowly.
-        for (i in 0 until 5) {
-            val y = horizon + (size.height - horizon) * (0.18f + i * 0.17f)
-            val x = ((t * (12f + i * 5f) + i * 211f) % (size.width + 300f)) - 150f
-            drawLine(
-                Brush.horizontalGradient(listOf(Color.Transparent, (if (i % 2 == 0) cyan else pink).copy(alpha = 0.18f), Color.Transparent), startX = x, endX = x + 260f),
-                Offset(x, y), Offset(x + 260f, y), strokeWidth = stroke * 0.8f,
-            )
-        }
-        // The city's glow breathing slowly over the horizon.
-        val breathe = 0.85f + 0.15f * sin(t * 0.3f)
-        drawRect(
-            Brush.verticalGradient(listOf(Color.Transparent, pink.copy(alpha = 0.10f * breathe), Color.Transparent), startY = horizon - size.height * 0.2f, endY = horizon + size.height * 0.05f),
-        )
+        neonLights(t, cyan, pink, horizon)
     }
 
     private fun DrawScope.sign(s: Sign, lit: Float, stroke: Float, mirrored: Boolean, wobble: Float = 0f) {
@@ -270,6 +258,25 @@ private class NeonCity(size: Size, private val cyan: Color, private val pink: Co
             for (i in 1..n) drawLine(s.color.copy(alpha = 0.8f * lit), Offset(topLeft.x + gap * i, topLeft.y + h * 0.3f), Offset(topLeft.x + gap * i, topLeft.y + h * 0.7f), stroke)
         }
     }
+}
+
+private const val NEON_HORIZON = 0.72f
+
+/** Neon City's moving lights: streaks drifting on the wet street below [horizon], the city's glow breathing over it. */
+private fun DrawScope.neonLights(t: Float, cyan: Color, pink: Color, horizon: Float) {
+    val stroke = size.minDimension * 0.004f
+    for (i in 0 until 5) {
+        val y = horizon + (size.height - horizon) * (0.18f + i * 0.17f)
+        val x = ((t * (12f + i * 5f) + i * 211f) % (size.width + 300f)) - 150f
+        drawLine(
+            Brush.horizontalGradient(listOf(Color.Transparent, (if (i % 2 == 0) cyan else pink).copy(alpha = 0.18f), Color.Transparent), startX = x, endX = x + 260f),
+            Offset(x, y), Offset(x + 260f, y), strokeWidth = stroke * 0.8f,
+        )
+    }
+    val breathe = 0.85f + 0.15f * sin(t * 0.3f)
+    drawRect(
+        Brush.verticalGradient(listOf(Color.Transparent, pink.copy(alpha = 0.10f * breathe), Color.Transparent), startY = horizon - size.height * 0.2f, endY = horizon + size.height * 0.05f),
+    )
 }
 
 // ---- Other skins --------------------------------------------------------------------------------------------------
@@ -345,8 +352,12 @@ private fun feltTile(): ImageBitmap {
     return bmp.asImageBitmap()
 }
 
-/** Generated backdrop textures (CR-13): Vinyl Lounge's art-deco wallpaper, Sport Cockpit's carbon, Tape Deck's brushed metal, Daylight's paper. */
+/**
+ * Generated backdrop textures (CR-13): Vinyl Lounge's art-deco wallpaper, Sport Cockpit's carbon, Tape Deck's brushed
+ * metal, Daylight's paper; Neon City's painted rainy city at night (CR-22).
+ */
 private fun textureFor(skinId: String): Int? = when (skinId) {
+    "neon" -> R.drawable.bg_neon
     "vinyl" -> R.drawable.bg_vinyl
     "amber" -> R.drawable.bg_amber
     "tape" -> R.drawable.bg_tape

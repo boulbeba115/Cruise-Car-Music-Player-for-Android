@@ -40,16 +40,32 @@ sealed interface Trigger {
  * A short press is reported at once unless the same button also starts a double tap or a combination that a rule
  * uses ([inUse]); then it waits up to [windowMs] for the second press, and is reported as a plain tap when none comes.
  * Buttons without such rules keep no delay at all, and two unrelated buttons pressed quickly stay two taps.
+ *
+ * Whether the unit repeats the long-press message while a button stays down, and whether it reports the release as a
+ * short press, is not known yet (CHANGE_REQUESTS.md CR-10): a run of holds of one button closer than [holdRepeatMs]
+ * apart is one hold, and a short press of that button right after its hold is not a tap.
  */
-class KeyEngine(private val windowMs: Long = DEFAULT_WINDOW_MS, private val inUse: () -> Set<Trigger>) {
+class KeyEngine(
+    private val windowMs: Long = DEFAULT_WINDOW_MS,
+    private val holdRepeatMs: Long = HOLD_REPEAT_MS,
+    private val inUse: () -> Set<Trigger>,
+) {
 
     private var pending: KeyInput? = null
+    private var lastHold: KeyInput? = null
 
     private fun waitsFor(code: Int, used: Set<Trigger>) = used.any {
         (it is Trigger.DoubleTap && it.code == code) || (it is Trigger.Combo && (it.first == code || it.second == code))
     }
 
     fun onInput(input: KeyInput): List<Trigger> {
+        val held = lastHold
+        if (held != null && held.code == input.code && input.timeMs - held.timeMs <= holdRepeatMs) {
+            // Still the same hold (repeat), or its release: nothing new. A repeat keeps the hold going.
+            if (input.press == Press.Long) lastHold = input
+            return emptyList()
+        }
+        if (input.press == Press.Long) lastHold = input
         val used = inUse()
         val out = ArrayList<Trigger>(2)
         val waiting = pending
@@ -84,5 +100,6 @@ class KeyEngine(private val windowMs: Long = DEFAULT_WINDOW_MS, private val inUs
 
     companion object {
         const val DEFAULT_WINDOW_MS = 350L
+        const val HOLD_REPEAT_MS = 700L
     }
 }

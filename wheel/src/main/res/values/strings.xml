@@ -4,66 +4,168 @@
     <string name="wheel_channel">Steering wheel</string>
     <string name="wheel_running">Steering-wheel buttons are handled by Cruise Wheel</string>
 
-    <string name="tab_buttons">Buttons</string>
-    <string name="tab_report">Car report</string>
-    <string name="tab_tools">Tools</string>
+    <!-- Status -->
+    <string name="status_active">Active</string>
+    <string name="status_no_wheel">No wheel on this device</string>
+    <string name="status_link_off">Waiting for the unit</string>
+    <string name="status_stopped">Stopped · tap to start</string>
 
-    <string name="status_title">Status</string>
-    <string name="status_tw_yes">TW head unit found: listening to the wheel</string>
-    <string name="status_tw_link_off">TW head unit found, but the MCU link is not open yet</string>
-    <string name="status_tw_no">This is not a TW head unit: the wheel cannot be read here</string>
-    <string name="status_helper_on">Helper on: the unit\'s own screens are closed for buttons you remap</string>
-    <string name="status_helper_off">Turn on the helper so remapped buttons stop opening the unit\'s screens</string>
-    <string name="status_helper_open">Open settings</string>
-    <string name="status_smart_calls">Phone button answers and ends calls</string>
-    <string name="status_smart_calls_hint">While a call rings or is active, this comes before your rules.</string>
+    <!-- Home -->
+    <string name="home_buttons">Your buttons</string>
+    <string name="home_hint">Press a button on the steering wheel: its card lights up.</string>
+    <string name="home_add">Add a button</string>
+    <string name="home_add_hint">Press it on the wheel</string>
+    <string name="home_default">Does what the unit does</string>
+    <string name="home_more">+%1$d more</string>
+    <string name="home_new_button">New button: %1$s</string>
+    <string name="home_set_up">Set it up</string>
+    <string name="home_settings">Settings</string>
 
-    <string name="live_title">Last buttons</string>
-    <string name="live_empty">Press a button on the steering wheel…</string>
-    <string name="live_short">short</string>
-    <string name="live_long">hold</string>
+    <!-- Setup -->
+    <string name="setup_title">Finish setting up</string>
+    <string name="setup_body">So your buttons work on every drive without opening this app.</string>
+    <string name="setup_keep_title">Keep working when the car is switched off</string>
+    <string name="setup_keep_body">The unit closes every app when the ignition goes off. Allow Cruise Wheel to stay.</string>
+    <string name="setup_keep_action">Allow</string>
+    <string name="setup_keep_refused">The unit refused. Cruise Wheel still starts again with Cruise and with the unit.</string>
+    <string name="setup_helper_title">Close the unit\'s own screens</string>
+    <string name="setup_helper_body">Turn on “Cruise steering-wheel helper” in Accessibility. Buttons you take over then stop opening the unit\'s screens, and Home, Back and Recent apps work.</string>
+    <string name="setup_helper_action">Open Accessibility</string>
+    <string name="setup_done">Done</string>
 
-    <string name="rules_title">Rules</string>
-    <string name="rules_empty">No rules: every button does what the unit does by default.</string>
-    <string name="rules_add">Add a rule</string>
-    <string name="rules_export">Export to USB</string>
-    <string name="rules_import">Import from USB</string>
-    <string name="rules_exported">Saved to %1$s</string>
-    <string name="rules_imported">%1$d rules imported</string>
-    <string name="rules_no_file">No mapping file found on the USB stick (cruise-wheel/mapping.json).</string>
-    <string name="rules_media_note">This button also reaches the music app as a media key.</string>
+    <!-- Adding a button -->
+    <string name="add_title">Press the button on the steering wheel</string>
+    <string name="add_body">Cruise Wheel is listening. Or pick the button here:</string>
+    <string name="add_no_wheel">This device has no steering-wheel link: pick the button here.</string>
+    <string name="add_cancel">Cancel</string>
 
-    <string name="trigger_tap">Short press</string>
+    <!-- Button screen -->
+    <string name="button_remove">Remove</string>
+    <string name="button_try">Press the button on the wheel to try it: the line that runs lights up.</string>
+    <string name="button_unit_also">The unit also %1$s</string>
+    <string name="trigger_tap">Press</string>
     <string name="trigger_hold">Hold</string>
     <string name="trigger_double">Double press</string>
-    <string name="trigger_combo">Two buttons together</string>
+    <string name="trigger_combo">With another button</string>
+    <string name="not_set">Not set</string>
+    <string name="takeover_full">Fully yours. Normally this button %1$s; Cruise Wheel switches that off.</string>
+    <string name="takeover_helper_on">Yours. The unit still %1$s, and the helper closes it at once.</string>
+    <string name="takeover_helper_off">Normally this button %1$s. Turn on the helper so that screen closes at once.</string>
+    <string name="takeover_shared">On a press the unit always %1$s, and that cannot be switched off. Hold and double press are free for your own actions.</string>
 
-    <string name="add_title">New rule</string>
-    <string name="add_step_trigger">1. When</string>
-    <string name="add_step_button">2. Which button</string>
-    <string name="add_step_button_two">2. Which two buttons</string>
-    <string name="add_press_now">Press it on the wheel now, or pick it below.</string>
-    <string name="add_step_action">3. Do</string>
-    <string name="add_pick_app">Choose the app</string>
-    <string name="add_save">Save rule</string>
-    <string name="add_cancel">Cancel</string>
+    <!-- Action picker -->
+    <string name="pick_title">%1$s · %2$s</string>
+    <string name="cat_music">Music</string>
+    <string name="cat_volume">Volume</string>
+    <string name="cat_calls">Calls</string>
+    <string name="cat_apps">Apps</string>
+    <string name="cat_screen">Screen</string>
+    <string name="cat_other">Other</string>
+    <string name="needs_helper">Needs the helper</string>
+    <string name="unit_default">Unit default</string>
+    <string name="pick_app_title">Choose the app</string>
 
     <string name="action_PlayPause">Play / pause</string>
     <string name="action_Next">Next track</string>
     <string name="action_Previous">Previous track</string>
+    <string name="action_FastForward">Fast forward</string>
+    <string name="action_Rewind">Rewind</string>
     <string name="action_Stop">Stop</string>
     <string name="action_VolumeUp">Volume up</string>
     <string name="action_VolumeDown">Volume down</string>
     <string name="action_Mute">Mute</string>
-    <string name="action_AnswerCall">Answer call</string>
+    <string name="action_AnswerCall">Answer / end call</string>
     <string name="action_RejectCall">Reject call</string>
     <string name="action_HangUp">Hang up</string>
-    <string name="action_OpenApp">Open an app</string>
+    <string name="action_OpenMusic">Open the music app</string>
+    <string name="action_OpenApp">Open an app…</string>
     <string name="action_Home">Home screen</string>
     <string name="action_Back">Back</string>
+    <string name="action_Recents">Recent apps</string>
+    <string name="action_Notifications">Notifications</string>
     <string name="action_VoiceAssistant">Voice assistant</string>
-    <string name="action_Nothing">Nothing (block the button)</string>
+    <string name="action_Nothing">Do nothing</string>
 
+    <!-- Wheel buttons -->
+    <string name="key_unknown">Button %1$d</string>
+    <string name="key_1">Volume +</string>
+    <string name="key_2">Volume −</string>
+    <string name="key_3">Mute</string>
+    <string name="key_5">Next</string>
+    <string name="key_6">Previous</string>
+    <string name="key_16">Home</string>
+    <string name="key_18">Back</string>
+    <string name="key_19">Next track</string>
+    <string name="key_20">Play / pause</string>
+    <string name="key_21">Previous track</string>
+    <string name="key_22">Fast forward</string>
+    <string name="key_23">Rewind</string>
+    <string name="key_24">Phone</string>
+    <string name="key_25">Hang up</string>
+    <string name="key_32">Navigation</string>
+    <string name="key_41">Music</string>
+    <string name="key_66">Sound mixer</string>
+    <string name="key_90">Voice</string>
+
+    <!-- What the unit does with a button: "Normally this button …" -->
+    <string name="does_unknown">does whatever the unit decides</string>
+    <string name="does_volume">changes the volume</string>
+    <string name="does_mute">mutes the sound</string>
+    <string name="does_next">skips to the next track</string>
+    <string name="does_previous">goes back a track</string>
+    <string name="does_play">plays or pauses the music</string>
+    <string name="does_ff">fast-forwards</string>
+    <string name="does_rew">rewinds</string>
+    <string name="does_home">goes to the home screen</string>
+    <string name="does_back">goes back</string>
+    <string name="does_phone">opens the Bluetooth phone screen</string>
+    <string name="does_hang_up">is only used for CarPlay and Android Auto calls</string>
+    <string name="does_navigation">opens the navigation app</string>
+    <string name="does_music">opens the music app</string>
+    <string name="does_mixer">opens the unit\'s sound settings</string>
+    <string name="does_voice">starts the voice assistant</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_always_on">Always on</string>
+    <string name="settings_keep_title">Stay on when the car is switched off</string>
+    <string name="settings_keep_body">Asks the unit not to close apps at ignition-off. Without it, Cruise Wheel comes back when Cruise or the unit starts.</string>
+    <string name="settings_helper_title">Accessibility helper</string>
+    <string name="settings_helper_on">On: the unit\'s screens are closed, Home, Back and Recent apps work.</string>
+    <string name="settings_helper_off">Off: turn it on in Accessibility.</string>
+    <string name="settings_helper_open">Open</string>
+    <string name="settings_autostart_title">Starts by itself</string>
+    <string name="settings_autostart_body">With the unit, with Cruise, and when a USB stick is mounted.</string>
+    <string name="settings_music">Music</string>
+    <string name="settings_music_title">Music actions control</string>
+    <string name="settings_music_cruise">Cruise</string>
+    <string name="settings_music_cruise_missing">Cruise (not installed)</string>
+    <string name="settings_music_any">Whatever is playing</string>
+    <string name="settings_music_other">Another app…</string>
+    <string name="settings_calls">Calls</string>
+    <string name="status_smart_calls">Phone button answers and ends calls</string>
+    <string name="status_smart_calls_hint">While a call rings or is active, this comes before your actions.</string>
+    <string name="settings_backup">Backup</string>
+    <string name="rules_export">Export to USB</string>
+    <string name="rules_import">Import from USB</string>
+    <string name="rules_exported">Saved to %1$s</string>
+    <string name="rules_imported">%1$d actions imported</string>
+    <string name="rules_no_file">No mapping file found on the USB stick (cruise-wheel/mapping.json).</string>
+    <string name="settings_advanced">Advanced</string>
+    <string name="settings_report_title">Car report</string>
+    <string name="settings_report_body">Find out which car signals this unit exposes.</string>
+    <string name="settings_log_title">Key log</string>
+    <string name="settings_log_body">Every message from the unit\'s MCU, as it arrives.</string>
+    <string name="settings_tools_title">Diagnostics</string>
+    <string name="settings_tools_body">Device report and test tools.</string>
+    <string name="settings_version">Version %1$s</string>
+
+    <!-- Key log -->
+    <string name="log_empty">Press a button on the steering wheel…</string>
+    <string name="log_short">press</string>
+    <string name="log_long">hold</string>
+
+    <!-- Car report -->
     <string name="report_intro">Find out which car features this unit exposes. Start listening, then do each step in the car: the report shows which signals changed while you did it.</string>
     <string name="report_start">Start listening</string>
     <string name="report_stop">Stop listening</string>

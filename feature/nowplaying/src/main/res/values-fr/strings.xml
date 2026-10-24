@@ -31,6 +31,7 @@
     <string name="np_access_grant">Autoriser l’accès</string>
     <string name="np_looking_title">Recherche de votre musique</string>
     <string name="np_looking_body">Un morceau sera prêt dans un instant.</string>
+    <string name="np_preparing_title">Préparation de votre musique</string>
     <string name="np_looking_count">%1$d morceaux trouvés…</string>
     <string name="np_no_music_title">Pas encore de musique</string>
     <string name="np_no_music_body">Cruise lit la musique du stockage interne, des cartes SD et des clés USB. Ajoutez-en sur l\'un d\'eux et elle démarre ici.</string>

@@ -70,5 +70,9 @@ class SteeringHelperService : AccessibilityService() {
         fun back(): Boolean = instance?.performGlobalAction(GLOBAL_ACTION_BACK) == true
 
         fun home(): Boolean = instance?.performGlobalAction(GLOBAL_ACTION_HOME) == true
+
+        fun recents(): Boolean = instance?.performGlobalAction(GLOBAL_ACTION_RECENTS) == true
+
+        fun notifications(): Boolean = instance?.performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS) == true
     }
 }

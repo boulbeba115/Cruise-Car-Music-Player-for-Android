@@ -14,6 +14,11 @@
     <!-- The playback notification (Android 13+). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Cruise starts the Cruise Wheel app with it (CruiseApplication.wakeWheel). -->
+    <queries>
+        <package android:name="com.boulbeba.cruise.wheel" />
+    </queries>
+
     <application
         android:name=".CruiseApplication"
         android:allowBackup="true"

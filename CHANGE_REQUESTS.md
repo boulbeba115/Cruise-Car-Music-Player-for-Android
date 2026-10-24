@@ -1,4 +1,4 @@
-# Cruise — Change requests after the first car test (1.1.0 → 1.2.0)
+# Cruise — Change requests from the car tests (1.1.0 → 1.2.0 → 1.2.1)
 
 Source: the owner's test of 1.1.0 (2026-10-23). This file turns that feedback into change requests (CRs) with
 acceptance criteria and an execution plan. [SPEC.md](SPEC.md) stays the reference for everything not changed here;
@@ -35,6 +35,12 @@ Status legend: ✅ done and verified on the PC (build, unit tests, screenshot te
 | [CR-14](#cr-14--fast-scroller-with-letter-bubble-on-long-lists) | Fast scroller with a letter bubble on long lists; A–Z view of the queue | P1 | ✅ Done · 👀 owner review |
 | [CR-15](#cr-15--neon-city-title-and-artist-on-a-banner-towed-by-a-neon-plane) | Neon City: title and artist on a banner towed by a neon plane, animated | P1 | ✅ Done · 👀 owner review |
 | [CR-16](#cr-16--app-icon-car-mascot-with-headphones) | App icon: the car mascot with headphones picked from the logo attempts | P1 | ✅ Done · 👀 owner review |
+| [CR-17](#cr-17--no-scan-screen-after-the-first-start) | No "finding your music" screen after the first start; rescans run silently in the background | P0 | ✅ Done · 🚗 needs the car |
+| [CR-18](#cr-18--cruise-wheel-redesign-and-working-remapping) | Cruise Wheel: simpler, cleaner screens; remapping that works; more actions (apps, screen, calls) | P0 | ✅ Done · 🚗 needs the car |
+| [CR-19](#cr-19--cruise-wheel-always-running) | Cruise Wheel always running: survives ignition-off, starts by itself | P0 | ✅ Done · 🚗 needs the car |
+| [CR-20](#cr-20--car-report-crash-on-start-listening) | Car report: app crashed on "Start listening" | P0 | ✅ Done · 🚗 needs the car |
+| [CR-21](#cr-21--phones-keep-playing-with-the-screen-off) | Phones: music keeps playing when the screen is switched off | P0 | ✅ Done · 👀 owner review |
+| [CR-22](#cr-22--neon-city-painted-backdrop) | Neon City: a painted rainy city at night instead of the drawn skyline | P1 | ✅ Done · 👀 owner review |
 
 ---
 
@@ -429,6 +435,97 @@ The Cruise Wheel app keeps its own icon.
 
 **Why.** Owner's request 2026-10-24: a logo attempt through both models on one sheet to pick from.
 
+## Second car test (1.2.0 + Cruise Wheel 0.1.0) → Cruise 1.2.1 + Cruise Wheel 0.2.0
+
+Source: the owner's car test, 2026-10-24. Cruise works well in the car; Cruise Wheel detects the buttons but does not
+carry out the mapping, does not stay running, its screens are hard to use, and it crashes on "Start listening".
+APKs: `D:\dev\cruise-builds\cruise-1.2.1*.apk`, `cruise-wheel-0.2.0.apk`.
+
+## CR-17 — No scan screen after the first start
+
+**Status: ✅ Done · 🚗 needs the car**
+- **Why it showed every time:** at ignition-off the unit force-stops every app (see CR-19), so each start was a cold
+  start. Now Playing showed "Finding your music… N songs found" until the player connected, and the start-up rescan was
+  presented like a first scan.
+- Cruise keeps a small snapshot of the song on screen; on a cold start Now Playing opens on it at once, and play/pause,
+  next, previous and seek pressed before the player is ready run as soon as it is.
+- Rescans of a library that already has music (start-up, USB stick mounted) are **quiet**: no count in the Library header,
+  no scan screen; they start 8 s after launch on one low-priority thread and read only new or changed files (as before).
+- "Finding your music" with a count is only for the very first scan; a fresh queue is built from the known library at
+  once instead of waiting for the rescan. A manual rescan (Library, Settings) still shows its progress.
+
+## CR-18 — Cruise Wheel redesign and working remapping
+
+**Status: ✅ Done · 🚗 needs the car**
+- **Home:** the driver's buttons as cards (icon, name, what press / hold / double press do); a card **lights up when its
+  button is pressed** on the wheel; an unknown button offers "New button: … Set it up"; "Add a button" listens for the
+  next press (or picks from the list on devices without a wheel). Status chip: Active / Waiting for the unit / Stopped.
+  A "Finish setting up" card lists what is missing (stay on at ignition-off, accessibility helper) with one-tap fixes.
+- **Button screen:** Press, Hold and Double press, each with its action; the line lights up when it runs. An honest note
+  says how far the unit lets the button go: *fully yours* (Phone, Hang up), *closed by the helper* (Sound mixer), or
+  *shared* (media, volume…: the unit's own action cannot be switched off, so hold and double press are the free ones).
+- **Action picker:** large tiles by category — Music (play/pause, next, previous, fast forward, rewind, stop), Volume,
+  Calls (answer / end, reject), Apps (open the music app, open any app — with app icons), Screen (home, back, recent apps,
+  notifications; voice assistant only when the unit has one), Other (do nothing, unit default).
+- **Settings:** stay on at ignition-off, helper, music actions target (Cruise / whatever is playing / another app),
+  phone-button call handling, export / import, and under Advanced: car report, **key log** (every raw MCU message, to
+  learn what the unit sends for presses and holds), diagnostics.
+- **Why the mapping did not act:** besides the service being stopped (CR-19), media actions went through Android's
+  media-key routing, which goes to whichever app played last. They now go **straight to Cruise** (its Media3 session
+  service; when Cruise is not running, play starts it through its media-button receiver), with the system routing as the
+  fallback and for other music apps.
+- Engine: a run of hold messages is one hold, and a short press reported right after a hold of the same button is its
+  release, not a tap (the unit's exact behaviour is still to be read in the key log). Combinations stay in the engine
+  and the mapping file but are no longer offered in the picker (no press/release events to make them reliable).
+- English and French; screenshot tests for the wheel screens (`gradlew :wheel:recordRoborazziDebug`).
+
+## CR-19 — Cruise Wheel always running
+
+**Status: ✅ Done · 🚗 needs the car**
+- **Why it stopped:** `com.tw.service` (`TWService.A()`, on the MCU's ignition-off message) **force-stops every app not
+  on its own list** unless the system property `persist.tw.kill` is non-zero. A force-stopped app gets no broadcast, not
+  even boot, until it is opened by hand. The property is not set on the owner's unit (device report).
+- "Stay on when the car is switched off" sets `persist.tw.kill=1` (the unit runs SELinux permissive, so an app may set
+  it); asked once in the setup card, re-applied whenever the service starts, undone by switching it off. If the unit
+  refuses, the app says so and relies on the other starts below.
+- The service also starts: with the unit (boot), when a USB stick is mounted, on the unit's ignition broadcast, **when
+  Cruise starts** (explicit broadcast that reaches a force-stopped app), whenever the app's process starts (including the
+  system binding the accessibility helper), and two seconds after its task is swiped away.
+- The phone-button hand-over flag is renewed on ignition-on and after every phone press, not only on screen-on.
+
+## CR-20 — Car report: crash on "Start listening"
+
+**Status: ✅ Done · 🚗 needs the car**
+- 0.1.0 opened the MCU link with **4,096 message ids** in one call (and retried on the same instance); the vendor apps
+  never pass more than 23. The crash was in native code, which no Kotlin `try` can catch.
+- Now: the 55 ids the unit's own apps subscribe to (read from their code), spread over three link instances of at most
+  20 ids, each opened once. `TwUtilBridge.open` refuses more than 24 ids.
+- The probe's message log is locked while the report is written on a background thread, and the settings/properties
+  snapshots of each step no longer run on the main thread.
+
+## CR-21 — Phones keep playing with the screen off
+
+**Status: ✅ Done · 👀 owner review** — the owner also uses Cruise on a phone (2026-10-24): the music stopped when the
+phone's screen went off.
+- **Why:** the car behaviour applied everywhere: 10 s after screen-off Cruise paused "for the ignition", and a pause
+  just before screen-off was resumed at screen-on.
+- Cruise now tells a head unit from a phone (TW unit, Android car mode, or no battery). On a phone: no pause at
+  screen-off ("Pause when the car switches off" defaults to Never), no resume at unlock, and no resume after a reboot
+  (it would start music in a pocket). Head units keep the car defaults; a choice made in Settings always wins.
+
+## CR-22 — Neon City: painted backdrop
+
+**Status: ✅ Done · 👀 owner review** — owner (2026-10-24): the Neon City background is "not that cool".
+- Twelve candidates from six scenes were generated with the local ComfyUI (Z-Image Turbo, 1344 × 768, 8 steps; seeds
+  9100 + 977 × scene + 31 × variant): rooftop skyline in the rain, synthwave sun and grid, skyline over a river, highway
+  light trails, Asian rooftops, rainy street. Picked: **a rainy rooftop over a neon skyline** (scene 1, variant 1) — the
+  LED billboard now stands on a real wet rooftop, and the dark sky keeps the title, times and controls readable.
+- Prompt: *view from a wet rooftop over a futuristic city at night in the rain, distant skyscrapers with neon lights, low
+  clouds lit pink from below, lots of dark sky, cinematic digital painting, very dark and moody, deep navy and black
+  shadows, glowing magenta and cyan neon light, rain haze, wide panorama*, plus the usual full-bleed / no-text clause.
+- `bg_neon.webp` (1280 px, 51 KB) like the other skin textures; the moving light streaks on the street and the city's
+  breathing glow stay on top. The drawn city remains only as a fallback.
+
 ## Execution plan
 
 Order chosen so that removals come first (less code to change afterwards), structure next, looks after that, and the
@@ -445,10 +542,15 @@ optimisation pass last over the final code.
 | 7 | Clean-up and optimisation pass; release APK; update SPEC.md and README | CR-09 | **Cruise 1.2.0 APK** in `D:\dev\cruise-builds` | 🟡 Mostly done (Baseline Profile left) |
 | 8 | Install 1.2.0 in the emulator and open it **for the owner to test**; wait for the owner's go and feedback | — | Owner's verdict | 👀 Opened in the emulator for the owner |
 | 9 | Second app: module, key engine, mapping UI, car-event bus, probe and report | CR-10 | **Cruise Wheel** APK for a car visit | 🟡 Built · 🚗 needs the car |
+| 10 | Second car test fixes: quiet rescans and instant Now Playing; Cruise Wheel redesign, direct music control, always running, probe crash; phones keep playing with the screen off; Neon City painted backdrop | CR-17–CR-22 | **Cruise 1.2.1** + **Cruise Wheel 0.2.0** APKs | ✅ Built · 🚗 needs the car |
 
 Every step keeps the build, unit tests, lint and the JVM screenshot tests green.
 
 ### Needs the car later
+- CR-19: whether the unit accepts `persist.tw.kill` from an app, and that both apps are still running after an
+  ignition-off / on.
+- CR-18: the key log while pressing and holding each button (does the unit repeat the hold message, report releases?),
+  and each action from the wheel with Cruise playing.
 - CR-10: whether the MCU sends press and release separately (combinations, hold), volume control path on the TW unit, the
   probe's guided capture.
 - CR-03/CR-04: scan speed and folder collapse on the owner's real USB stick.

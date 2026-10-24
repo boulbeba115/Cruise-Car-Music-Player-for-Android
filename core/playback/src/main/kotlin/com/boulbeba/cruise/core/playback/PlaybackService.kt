@@ -184,13 +184,14 @@ class PlaybackService : MediaSessionService() {
 
     /**
      * Fresh install or empty queue (CHANGE_REQUESTS.md CR-03): as soon as the library has music, queue all of it in
-     * shuffle from a random track, paused, so Now Playing always shows a song. Waits for the running scan to finish
-     * (at most [FRESH_SCAN_WAIT_MS]) so the queue holds the whole stick, not just the first files found.
+     * shuffle from a random track, paused, so Now Playing always shows a song. During the very first scan it waits for
+     * the scan to finish (at most [FRESH_SCAN_WAIT_MS]) so the queue holds the whole stick, not just the first files
+     * found; a library known from before is used at once.
      */
     private fun startFreshQueue() {
         scope.launch {
             library.trackCount.first { it > 0 }
-            withTimeoutOrNull(FRESH_SCAN_WAIT_MS) { scanner.state.first { !it.running } }
+            if (!scanner.state.value.quiet) withTimeoutOrNull(FRESH_SCAN_WAIT_MS) { scanner.state.first { !it.running } }
             if (exo.mediaItemCount > 0) return@launch
             val tracks = withContext(Dispatchers.IO) { library.allTracks().sortedWith(LibraryRepository.FOLDER_ORDER) }
             if (tracks.isEmpty() || exo.mediaItemCount > 0) return@launch
@@ -317,8 +318,9 @@ class PlaybackService : MediaSessionService() {
                     val delay = settings.sleepPauseDelayMs
                     if (exo.isPlaying && delay > 0) {
                         handler.postDelayed(sleepPause, delay)
-                    } else if (!exo.isPlaying && SystemClock.elapsedRealtime() - lastPlayingAt < RECENT_PLAY_MS) {
-                        // The unit itself paused us just before switching off (ignition): remember to resume.
+                    } else if (settings.isHeadUnit && !exo.isPlaying && SystemClock.elapsedRealtime() - lastPlayingAt < RECENT_PLAY_MS) {
+                        // The unit itself paused us just before switching off (ignition): remember to resume. On a
+                        // phone this is the user pausing and then locking it, which must not resume at unlock.
                         pausedForSleep = true
                         savePosition()
                     }
