@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextLayoutResult
@@ -188,6 +189,9 @@ private fun DrawScope.tonearm(pivot: Offset, length: Float, angle: Float, lift: 
  * lamp bar whose light cones pulse with the music, trimmed with a pink neon tube, standing on steel scaffolding over
  * a wet roof that mirrors it, under light rain. A slow red aviation light breathes on top. Without art the screen shows
  * a neon record-and-note drawing. The LED grid is drawn once per size; each frame only adds lights, rain and the sweep.
+ *
+ * Toned for the painted foggy city behind it (CR-22): cool dark steel, the screen's light spilling into the haze, the
+ * scaffold and roof sinking into a fog veil like the buildings around it, and a soft trim instead of bright tubes.
  */
 @Composable
 private fun NeonCover(state: PlayerUiState, image: ImageBitmap?, audio: AudioLevels, cyan: Color, pink: Color, size: Dp, modifier: Modifier) {
@@ -214,9 +218,10 @@ private fun NeonCover(state: PlayerUiState, image: ImageBitmap?, audio: AudioLev
                         val lit = flicker.value
                         scaffold(board, roofY, s)
                         roofReflection(image, screen, roofY, s, cyan, pink)
+                        screenSpill(board, s, cyan, lit * (0.85f + 0.15f * level))
                         // Frame and screen.
-                        drawRoundRect(Color(0xFF1A2032), board.topLeft - Offset(0f, 0f), board.size, CornerRadius(s * 0.012f))
-                        drawRoundRect(Color(0xFF3A4560), board.topLeft, board.size, CornerRadius(s * 0.012f), style = Stroke(s * 0.006f))
+                        drawRoundRect(STEEL_DARK, board.topLeft, board.size, CornerRadius(s * 0.012f))
+                        drawRoundRect(STEEL_EDGE, board.topLeft, board.size, CornerRadius(s * 0.012f), style = Stroke(s * 0.006f))
                         if (image != null) drawCropped(image, screen) else neonPlaceholder(screen, cyan, pink, lit)
                         drawRect(Color.White.copy(alpha = 0.05f * level), screen.topLeft, screen.size)
                         drawImage(grid, topLeft = screen.topLeft)
@@ -230,16 +235,17 @@ private fun NeonCover(state: PlayerUiState, image: ImageBitmap?, audio: AudioLev
                             )
                         }
                         lampBar(board, s, level, lit)
-                        // Neon trim: a pink tube under the frame, short cyan tubes up the sides.
-                        neonLine(Offset(board.left + s * 0.02f, board.bottom + s * 0.018f), Offset(board.right - s * 0.02f, board.bottom + s * 0.018f), pink, s * 0.008f, lit * (0.85f + 0.15f * level))
-                        neonLine(Offset(board.left - s * 0.02f, board.top + board.height * 0.2f), Offset(board.left - s * 0.02f, board.bottom - board.height * 0.2f), cyan, s * 0.006f, lit)
-                        neonLine(Offset(board.right + s * 0.02f, board.top + board.height * 0.2f), Offset(board.right + s * 0.02f, board.bottom - board.height * 0.2f), cyan, s * 0.006f, lit)
+                        // Neon trim, soft as seen through fog: an orchid tube under the frame, teal tubes up the sides.
+                        neonLine(Offset(board.left + s * 0.02f, board.bottom + s * 0.018f), Offset(board.right - s * 0.02f, board.bottom + s * 0.018f), pink, s * 0.007f, lit * (0.5f + 0.12f * level))
+                        neonLine(Offset(board.left - s * 0.02f, board.top + board.height * 0.2f), Offset(board.left - s * 0.02f, board.bottom - board.height * 0.2f), cyan, s * 0.005f, lit * 0.5f)
+                        neonLine(Offset(board.right + s * 0.02f, board.top + board.height * 0.2f), Offset(board.right + s * 0.02f, board.bottom - board.height * 0.2f), cyan, s * 0.005f, lit * 0.5f)
                         // Aviation light on top, breathing slowly (no flashing).
                         val beacon = Offset(board.right - s * 0.03f, board.top - s * 0.075f)
                         val glow = 0.35f + 0.65f * ((sin(t * 1.6f) + 1f) / 2f)
-                        drawLine(Color(0xFF3A4560), beacon, Offset(beacon.x, board.top - s * 0.03f), s * 0.006f)
+                        drawLine(STEEL_EDGE, beacon, Offset(beacon.x, board.top - s * 0.03f), s * 0.006f)
                         drawCircle(Brush.radialGradient(listOf(Color(0xFFFF3B3B).copy(alpha = 0.6f * glow), Color.Transparent), center = beacon, radius = s * 0.04f), s * 0.04f, beacon)
                         drawCircle(Color(0xFFFF5A5A).copy(alpha = 0.5f + 0.5f * glow), s * 0.009f, beacon)
+                        fogVeil(board, roofY, s)
                     }
                 },
         )
@@ -285,8 +291,8 @@ private fun ledGrid(size: Size, pitch: Float): ImageBitmap {
 
 /** Steel legs with cross-bracing down to the roof slab. */
 private fun DrawScope.scaffold(board: Rect, roofY: Float, s: Float) {
-    val steel = Color(0xFF2A3146)
-    val edge = Color(0xFF46516E)
+    val steel = STEEL
+    val edge = STEEL_EDGE
     val legs = listOf(board.left + board.width * 0.16f, board.right - board.width * 0.16f)
     val w = s * 0.014f
     legs.forEach { x -> drawLine(steel, Offset(x, board.bottom), Offset(x, roofY), w); drawLine(edge, Offset(x - w / 3, board.bottom), Offset(x - w / 3, roofY), w / 4) }
@@ -300,36 +306,72 @@ private fun DrawScope.scaffold(board: Rect, roofY: Float, s: Float) {
         drawLine(edge, Offset(legs[0], y1), Offset(legs[1], y1), w * 0.35f)
     }
     // Roof slab.
-    drawRect(Brush.verticalGradient(listOf(Color(0xFF0D1222), Color(0xFF05070F)), startY = roofY, endY = s), Offset(s * 0.02f, roofY), Size(s * 0.96f, s - roofY))
-    drawLine(Color(0xFF19E6FF).copy(alpha = 0.25f), Offset(s * 0.02f, roofY), Offset(s * 0.98f, roofY), s * 0.003f)
+    // Roof slab as dark as the roofs around it, fading out at both ends so no straight edge shows.
+    val slab = Color(0xFF05090B)
+    drawRect(
+        Brush.horizontalGradient(0f to Color.Transparent, 0.15f to slab, 0.85f to slab, 1f to Color.Transparent, startX = s * 0.02f, endX = s * 0.98f),
+        Offset(s * 0.02f, roofY), Size(s * 0.96f, s - roofY),
+    )
+    drawLine(
+        Brush.horizontalGradient(listOf(Color.Transparent, FOG.copy(alpha = 0.3f), Color.Transparent), startX = s * 0.02f, endX = s * 0.98f),
+        Offset(s * 0.02f, roofY), Offset(s * 0.98f, roofY), s * 0.003f,
+    )
 }
+
+/** The screen's light spilling into the haze around the board: wide, faint, no hard edge. */
+private fun DrawScope.screenSpill(board: Rect, s: Float, light: Color, lit: Float) {
+    val c = lerp(light, Color.White, 0.25f)
+    val r = maxOf(board.width, board.height) * 0.85f
+    drawCircle(Brush.radialGradient(listOf(c.copy(alpha = 0.16f * lit), c.copy(alpha = 0.05f * lit), Color.Transparent), center = board.center, radius = r), r, board.center)
+}
+
+/**
+ * Fog over the billboard as over the buildings behind it: a light haze on the whole board, and a bank lying on the roof
+ * so the scaffold and the slab fade into it. Soft shapes only: no edge of the drawing area may show against the sky.
+ */
+private fun DrawScope.fogVeil(board: Rect, roofY: Float, s: Float) {
+    val r = s * 0.62f
+    drawCircle(Brush.radialGradient(listOf(FOG.copy(alpha = 0.08f), Color.Transparent), center = board.center, radius = r), r, board.center)
+    val bank = Offset(s / 2f, roofY)
+    val br = s * 0.55f
+    scale(1f, 0.42f, pivot = bank) {
+        drawCircle(Brush.radialGradient(listOf(FOG.copy(alpha = 0.32f), FOG.copy(alpha = 0.15f), Color.Transparent), center = bank, radius = br), br, bank)
+    }
+}
+
+// Neon City's billboard metal and the city's fog (CR-22).
+private val STEEL = Color(0xFF1B262C)
+private val STEEL_DARK = Color(0xFF111A1F)
+private val STEEL_EDGE = Color(0xFF2E3E45)
+private val FOG = Color(0xFF3E6B78)
 
 /** The wet roof mirrors the screen: flipped, squashed, faint. */
 private fun DrawScope.roofReflection(image: ImageBitmap?, screen: Rect, roofY: Float, s: Float, cyan: Color, pink: Color) {
     clipRect(s * 0.02f, roofY, s * 0.98f, s) {
         if (image != null) {
             withTransform({ scale(1f, -0.22f, pivot = Offset(screen.center.x, roofY)) }) {
-                drawCropped(image, screen.translate(Offset(0f, roofY - screen.bottom)), alpha = 0.22f)
+                drawCropped(image, screen.translate(Offset(0f, roofY - screen.bottom)), alpha = 0.12f)
             }
         }
-        drawRect(Brush.horizontalGradient(listOf(Color.Transparent, pink.copy(alpha = 0.10f), cyan.copy(alpha = 0.08f), Color.Transparent)), Offset(s * 0.02f, roofY), Size(s * 0.96f, s - roofY))
+        drawRect(Brush.horizontalGradient(listOf(Color.Transparent, pink.copy(alpha = 0.05f), cyan.copy(alpha = 0.04f), Color.Transparent)), Offset(s * 0.02f, roofY), Size(s * 0.96f, s - roofY))
     }
 }
 
 /** Four lamps on a bar above the board, throwing warm light cones onto the screen. */
 private fun DrawScope.lampBar(board: Rect, s: Float, level: Float, lit: Float) {
     val barY = board.top - s * 0.045f
-    drawLine(Color(0xFF3A4560), Offset(board.left + s * 0.03f, barY), Offset(board.right - s * 0.03f, barY), s * 0.008f)
+    drawLine(STEEL_EDGE, Offset(board.left + s * 0.03f, barY), Offset(board.right - s * 0.03f, barY), s * 0.008f)
     for (k in 0 until 4) {
         val x = board.left + board.width * (0.14f + 0.24f * k)
-        drawLine(Color(0xFF3A4560), Offset(x, barY), Offset(x, barY + s * 0.02f), s * 0.005f)
+        drawLine(STEEL_EDGE, Offset(x, barY), Offset(x, barY + s * 0.02f), s * 0.005f)
         val head = Offset(x, barY + s * 0.025f)
         val cone = Path().apply {
             moveTo(x - s * 0.014f, head.y); lineTo(x + s * 0.014f, head.y)
             lineTo(x + s * 0.11f, board.top + board.height * 0.62f); lineTo(x - s * 0.11f, board.top + board.height * 0.62f); close()
         }
-        drawPath(cone, Brush.verticalGradient(listOf(Color(0xFFFFF1C9).copy(alpha = (0.20f + 0.12f * level) * lit), Color.Transparent), startY = head.y, endY = board.top + board.height * 0.62f))
-        drawRoundRect(Color(0xFF1A2032), Offset(x - s * 0.018f, barY + s * 0.012f), Size(s * 0.036f, s * 0.018f), CornerRadius(s * 0.006f))
+        // Warm lamps in cold fog: the cones show in the haze, a little softer than in clear air.
+        drawPath(cone, Brush.verticalGradient(listOf(Color(0xFFFFE3B0).copy(alpha = (0.15f + 0.08f * level) * lit), Color.Transparent), startY = head.y, endY = board.top + board.height * 0.62f))
+        drawRoundRect(STEEL_DARK, Offset(x - s * 0.018f, barY + s * 0.012f), Size(s * 0.036f, s * 0.018f), CornerRadius(s * 0.006f))
         drawCircle(Color(0xFFFFF4D6).copy(alpha = 0.6f + 0.4f * lit), s * 0.006f, head)
     }
 }

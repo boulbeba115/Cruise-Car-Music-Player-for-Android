@@ -54,21 +54,24 @@ val DaylightColors = CruiseColors(
     accent2 = Color(0xFF6A4DD6),
 )
 
-/** Neon City: night blue-black, electric cyan and neon red-pink, an amber sign as third colour. */
+/**
+ * Neon City: the colours of its backdrop (CR-22) — teal-black night, the searchlights' soft teal, the orchid of a
+ * neon sign in the fog, warm lamp amber. Less electric than before so the drawn parts sit in the painted city.
+ */
 val NeonColors = CruiseColors(
-    background = Color(0xFF05070F),
-    surface = Color(0xFF0C1020),
-    surfaceElevated = Color(0xFF141A30),
-    accent = Color(0xFF19E6FF),
-    onAccent = Color(0xFF001A1F),
-    textPrimary = Color(0xFFF2FBFF),
-    textSecondary = Color(0xFF93A9C9),
-    divider = Color(0xFF1C2440),
-    success = Color(0xFF19E6FF),
-    warning = Color(0xFFFFB000),
-    error = Color(0xFFFF2A6D),
+    background = Color(0xFF070D10),
+    surface = Color(0xFF0C171B),
+    surfaceElevated = Color(0xFF13232A),
+    accent = Color(0xFF6FDDE2),
+    onAccent = Color(0xFF04191B),
+    textPrimary = Color(0xFFE4F2F3),
+    textSecondary = Color(0xFF8DA8AE),
+    divider = Color(0xFF18282E),
+    success = Color(0xFF6FDDE2),
+    warning = Color(0xFFE3B261),
+    error = Color(0xFFD66AB4),
     isDark = true,
-    accent2 = Color(0xFFFF2A6D),
+    accent2 = Color(0xFFD66AB4),
 )
 
 /** Sport Cockpit: graphite, cool white type, signal red for needle and red zone, ice blue for the LEDs. */

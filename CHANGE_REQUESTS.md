@@ -40,7 +40,7 @@ Status legend: ✅ done and verified on the PC (build, unit tests, screenshot te
 | [CR-19](#cr-19--cruise-wheel-always-running) | Cruise Wheel always running: survives ignition-off, starts by itself | P0 | ✅ Done · 🚗 needs the car |
 | [CR-20](#cr-20--car-report-crash-on-start-listening) | Car report: app crashed on "Start listening" | P0 | ✅ Done · 🚗 needs the car |
 | [CR-21](#cr-21--phones-keep-playing-with-the-screen-off) | Phones: music keeps playing when the screen is switched off | P0 | ✅ Done · 👀 owner review |
-| [CR-22](#cr-22--neon-city-painted-backdrop) | Neon City: a painted rainy city at night instead of the drawn skyline | P1 | ✅ Done · 👀 owner review |
+| [CR-22](#cr-22--neon-city-painted-backdrop-and-the-skin-toned-to-match-it) | Neon City: a painted foggy teal city, and the billboard, plane and colours toned to match it | P1 | ✅ Done · 👀 owner review |
 
 ---
 
@@ -513,18 +513,31 @@ phone's screen went off.
   screen-off ("Pause when the car switches off" defaults to Never), no resume at unlock, and no resume after a reboot
   (it would start music in a pocket). Head units keep the car defaults; a choice made in Settings always wins.
 
-## CR-22 — Neon City: painted backdrop
+## CR-22 — Neon City: painted backdrop, and the skin toned to match it
 
-**Status: ✅ Done · 👀 owner review** — owner (2026-10-24): the Neon City background is "not that cool".
-- Twelve candidates from six scenes were generated with the local ComfyUI (Z-Image Turbo, 1344 × 768, 8 steps; seeds
-  9100 + 977 × scene + 31 × variant): rooftop skyline in the rain, synthwave sun and grid, skyline over a river, highway
-  light trails, Asian rooftops, rainy street. Picked: **a rainy rooftop over a neon skyline** (scene 1, variant 1) — the
-  LED billboard now stands on a real wet rooftop, and the dark sky keeps the title, times and controls readable.
-- Prompt: *view from a wet rooftop over a futuristic city at night in the rain, distant skyscrapers with neon lights, low
-  clouds lit pink from below, lots of dark sky, cinematic digital painting, very dark and moody, deep navy and black
-  shadows, glowing magenta and cyan neon light, rain haze, wide panorama*, plus the usual full-bleed / no-text clause.
-- `bg_neon.webp` (1280 px, 51 KB) like the other skin textures; the moving light streaks on the street and the city's
-  breathing glow stay on top. The drawn city remains only as a fallback.
+**Status: ✅ Done · 👀 owner review** — owner (2026-10-24): the drawn Neon City background is "not that cool".
+- **Round 1** (12 images, six scenes, Z-Image Turbo): picked a rainy rooftop over a pink-lit skyline and released it in
+  1.2.1 — the owner did not like it.
+- **Round 2** from three references the owner sent (a flat teal vector skyline with rooftop light beams; a foggy
+  megacity with giant holographic ad pillars seen from a hill; a foggy elevated walkway): four directions × six images
+  (four Z-Image Turbo, two Krea-2 Turbo; 1344 × 768; seeds 31000 + 101 × ord(direction) + 7 × n). The owner liked
+  **D_5 / D_6** (Krea-2: teal fog over dark rooftops, searchlights from tower tops, one holographic column); D_5 is used,
+  being darker and calmer behind the title.
+  Prompt: *night panorama over a dark futuristic city drowned in teal fog, tall towers with glowing rooftop lights
+  sending beams of light into the sky, one enormous glowing holographic column in the distance, faint pink neon accents,
+  dark foreground rooftops in silhouette, cinematic concept art, very atmospheric, dark sky*, plus the full-bleed /
+  no-text clause.
+- **The skin follows the picture** (owner: the neon parts and the plane would not fit and the colours would be too
+  bright):
+  - Palette sampled from the backdrop: teal-black backgrounds, the searchlights' soft teal `#6FDDE2` instead of
+    electric cyan, the orchid `#D66AB4` of its pink sign instead of hot pink, lamp amber.
+  - Billboard: cool dark steel, the screen's light spilling softly into the haze, the scaffold and roof fading into a
+    fog bank like the buildings, a soft trim instead of bright tubes, gentler lamp cones and roof reflection.
+  - Plane: a real plane at night instead of a neon drawing — dark silhouette lit from below by the city, teal rim
+    light, warm cockpit, red beacon, green wing light, white tail light, faint landing light. Banner: dark cloth, soft
+    lettering, title pale teal and artist orchid.
+  - Background motion: slow drifting fog banks instead of light streaks on a street that is no longer there.
+- `bg_neon.webp` (1280 px, 26 KB); the drawn city remains only as a fallback.
 
 ## Execution plan
 

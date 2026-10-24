@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -62,14 +63,18 @@ import kotlin.math.sin
 import kotlinx.coroutines.delay
 
 /**
- * Neon City's track sign (CHANGE_REQUESTS.md CR-15): a neon-outlined prop plane tows an advertising banner across the
- * night sky, the title in pink tubes and the artist in cyan. On a new track the plane flies off to the left and the
+ * Neon City's track sign (CHANGE_REQUESTS.md CR-15): a prop plane tows an advertising banner across the
+ * night sky, the title and the artist in lit lettering. On a new track the plane flies off to the left and the
  * next one comes in from the right, slowing to a cruise; the banner's tubes light up from the leading edge, blink once
  * and stay lit, while the cloth flutters — a wave running to its free end — and the plane bobs. Names too long for the
  * banner scroll along it.
  *
  * Cheap on the unit: each line of text is drawn once per track, glow included, into a bitmap; each frame slices it into
  * narrow strips shifted by the wave, so nothing is laid out again and no blur runs per frame. Paused, it holds still.
+ *
+ * Over the painted foggy city (CR-22) the plane is a real one at night rather than a neon drawing: a dark silhouette
+ * rim-lit by the city's teal glow, a warm cockpit, navigation lights (red beacon, green wing light, white tail light)
+ * and a faint landing light ahead; the banner is dark cloth with soft lettering, the title pale teal, the artist orchid.
  */
 @Composable
 internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: Color, playing: Boolean, modifier: Modifier = Modifier) {
@@ -106,9 +111,10 @@ internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: C
     }
 
     val titleStyle = type.display
-    val titleLine = remember(shown.first, titleStyle, pink, density) { NeonLine.of(measurer, shown.first, titleStyle, pink, density) }
-    val artistLine = remember(shown.second, type.subtitle, cyan, density) {
-        shown.second.takeIf { it.isNotBlank() }?.let { NeonLine.of(measurer, it, type.subtitle, cyan, density) }
+    val titleColor = lerp(cyan, Color.White, 0.45f)
+    val titleLine = remember(shown.first, titleStyle, titleColor, density) { NeonLine.of(measurer, shown.first, titleStyle, titleColor, density) }
+    val artistLine = remember(shown.second, type.subtitle, pink, density) {
+        shown.second.takeIf { it.isNotBlank() }?.let { NeonLine.of(measurer, it, type.subtitle, pink, density) }
     }
     val bannerHeightPx = titleLine.textHeight + (artistLine?.textHeight ?: 0) + with(density) { BANNER_PAD_Y.toPx() } * 2
     val height = with(density) { max(bannerHeightPx, PLANE_W.toPx() * PLANE_RATIO).toDp() } + 30.dp
@@ -145,10 +151,11 @@ internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: C
                 val bob = 3.dp.toPx()
                 val gap = MARQUEE_GAP.toPx()
                 val speed = MARQUEE_SPEED.toPx()
-                val bodyPen = NeonPen(1.6.dp.toPx())
-                val thinPen = NeonPen(1.1.dp.toPx())
+                val finStroke = Stroke(2.4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
                 val ropeStroke = 1.dp.toPx()
-                val dark = Color(0xFF0B1224)
+                val dark = Color(0xFF0C1418)
+                val rim = Stroke(1.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                val clothEdge = Stroke(1.dp.toPx())
                 onDrawBehind {
                     val t = time.value
                     val glow = lit.value
@@ -174,12 +181,12 @@ internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: C
                     val poleTop = Offset(bannerLeft, top + dys[0])
                     val poleBottom = Offset(bannerLeft, top + bannerH + dys[0])
                     val ring = Offset(planeW + (bannerLeft - planeW) * 0.45f, (hook.y + (poleTop.y + poleBottom.y) / 2f) / 2f)
-                    val rope = Color(0xFF8A96B8).copy(alpha = 0.75f)
+                    val rope = Color(0xFF7D959C).copy(alpha = 0.6f)
                     drawLine(rope, hook, ring, ropeStroke)
                     drawLine(rope, ring, poleTop, ropeStroke)
                     drawLine(rope, ring, poleBottom, ropeStroke)
 
-                    drawPath(cloth, Color(0xE60A0E1C))
+                    drawPath(cloth, Color(0xE0081115))
                     for (i in 0 until strips) {
                         val m = (slopes[i] + slopes[i + 1]) / 2f
                         quad.reset()
@@ -190,8 +197,9 @@ internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: C
                         quad.close()
                         drawPath(quad, if (m > 0f) Color.Black.copy(alpha = 0.22f * m) else Color.White.copy(alpha = -0.06f * m))
                     }
-                    neonPath(cloth, cyan, thinPen, glow * (0.4f + 0.6f * shownReveal))
-                    drawLine(Color(0xFF9AA6C6), poleTop, poleBottom, 2.2.dp.toPx(), StrokeCap.Round)
+                    // The cloth's edge catching the city's light, not a tube.
+                    drawPath(cloth, cyan.copy(alpha = 0.22f * glow * (0.4f + 0.6f * shownReveal)), style = clothEdge)
+                    drawLine(Color(0xFF7D959C), poleTop, poleBottom, 2.2.dp.toPx(), StrokeCap.Round)
 
                     // The two lines of tubes, sliced along the wave.
                     val marquee = max(0f, t - marqueeFrom.floatValue) * speed
@@ -223,32 +231,56 @@ internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: C
 
                     // The plane, nose to the left, pitching gently with its bob.
                     translate(0f, planeTop) {
+                        // Landing light: a faint beam ahead of the nose, lost in the haze.
+                        val nose = Offset(planeW * 0.10f, planeH * 0.62f)
+                        val beam = Path().apply {
+                            moveTo(nose.x, nose.y - planeH * 0.04f)
+                            lineTo(nose.x - planeW * 0.9f, nose.y - planeH * 0.05f + planeH * 0.35f)
+                            lineTo(nose.x - planeW * 0.9f, nose.y + planeH * 0.75f)
+                            lineTo(nose.x, nose.y + planeH * 0.04f)
+                            close()
+                        }
+                        drawPath(beam, Brush.horizontalGradient(listOf(Color.Transparent, Color(0xFFEAF6F4).copy(alpha = 0.10f * glow)), startX = nose.x - planeW * 0.9f, endX = nose.x))
                         rotate(1.2f * cos(t * 1.15f + 0.7f), Offset(planeW * 0.5f, planeH * 0.5f)) {
-                            drawPath(plane.body, dark)
-                            drawPath(plane.wing, dark)
-                            drawPath(plane.window, cyan.copy(alpha = 0.16f * glow))
-                            neonPath(plane.fin, cyan, bodyPen, glow)
-                            neonPath(plane.body, cyan, bodyPen, glow)
-                            neonPath(plane.wing, cyan, thinPen, glow)
-                            neonPath(plane.window, cyan, thinPen, glow * 0.8f)
-                            neonPath(plane.stripe, pink, thinPen, glow)
-                            neonPath(plane.gear, cyan, thinPen, glow * 0.8f)
+                            // Dark above, lit from below by the city's teal glow, so it reads against the night sky.
+                            val belly = Brush.verticalGradient(listOf(dark, Color(0xFF2B4A53)), startY = planeH * 0.15f, endY = planeH * 0.8f)
+                            drawPath(plane.body, belly)
+                            drawPath(plane.wing, belly)
+                            drawPath(plane.fin, Color(0xFF1A262B), style = finStroke)
+                            // Rim light from the city below and behind: thin, teal, stronger along the underside.
+                            drawPath(plane.body, cyan.copy(alpha = 0.55f), style = rim)
+                            drawPath(plane.fin, cyan.copy(alpha = 0.45f), style = rim)
+                            drawPath(plane.wing, cyan.copy(alpha = 0.4f), style = rim)
+                            drawPath(plane.gear, Color(0xFF2A3A40), style = rim)
+                            // Warm cockpit.
+                            drawPath(plane.window, Color(0xFFE3B261).copy(alpha = 0.16f * glow))
+                            drawPath(plane.window, Color(0xFFE3B261).copy(alpha = 0.35f * glow), style = rim)
+                            // A thin livery line.
+                            drawPath(plane.stripe, pink.copy(alpha = 0.55f), style = rim)
                             // Propeller: a faint disc and a blade turning in it.
                             val hub = Offset(planeW * 0.06f, planeH * 0.56f)
-                            drawOval(cyan.copy(alpha = 0.12f), Offset(hub.x - planeW * 0.018f, hub.y - planeH * 0.45f), Size(planeW * 0.036f, planeH * 0.9f))
+                            drawOval(Color(0xFFB8CDD1).copy(alpha = 0.08f), Offset(hub.x - planeW * 0.018f, hub.y - planeH * 0.45f), Size(planeW * 0.036f, planeH * 0.9f))
                             val blade = planeH * 0.45f * cos(t * 40f)
-                            drawLine(lerp(cyan, Color.White, 0.5f).copy(alpha = 0.7f), Offset(hub.x, hub.y - blade), Offset(hub.x, hub.y + blade), 1.4.dp.toPx(), StrokeCap.Round)
-                            drawCircle(lerp(cyan, Color.White, 0.6f), planeW * 0.022f, hub)
-                            // Red light on the fin, breathing slowly (no flashing).
-                            val beacon = Offset(planeW * 0.915f, planeH * 0.04f)
+                            drawLine(Color(0xFFB8CDD1).copy(alpha = 0.45f), Offset(hub.x, hub.y - blade), Offset(hub.x, hub.y + blade), 1.4.dp.toPx(), StrokeCap.Round)
+                            drawCircle(Color(0xFF2A3A40), planeW * 0.022f, hub)
+                            // Navigation lights, breathing slowly (no flashing): red beacon on the fin, green on the wing
+                            // tip, white at the tail.
                             val breath = (sin(t * 2.2f) + 1f) / 2f
-                            drawCircle(Color(0xFFFF3B3B).copy(alpha = 0.18f + 0.3f * breath), 6.dp.toPx(), beacon)
-                            drawCircle(Color(0xFFFF6B6B), 2.dp.toPx(), beacon)
+                            navLight(Offset(planeW * 0.915f, planeH * 0.04f), Color(0xFFFF4A4A), 0.45f + 0.55f * breath)
+                            navLight(Offset(planeW * 0.64f, planeH * 0.56f), Color(0xFF5BFF9A), 0.75f)
+                            navLight(Offset(planeW * 0.99f, planeH * 0.45f), Color(0xFFF2F7F8), 0.6f)
                         }
                     }
                 }
             },
     )
+}
+
+/** A small light with its halo in the haze. */
+private fun DrawScope.navLight(at: Offset, color: Color, lit: Float) {
+    val halo = 7.dp.toPx()
+    drawCircle(Brush.radialGradient(listOf(color.copy(alpha = 0.45f * lit), Color.Transparent), center = at, radius = halo), halo, at)
+    drawCircle(lerp(color, Color.White, 0.4f).copy(alpha = 0.6f + 0.4f * lit), 1.8.dp.toPx(), at)
 }
 
 /** One line of the banner, lit: glow and tube drawn once into a bitmap with [pad] of room for the glow around the text. */
@@ -278,25 +310,13 @@ private class NeonLine(val image: ImageBitmap, val pad: Int, val textWidth: Int,
             val image = ImageBitmap(w, h)
             CanvasDrawScope().draw(density, LayoutDirection.Ltr, Canvas(image), Size(w.toFloat(), h.toFloat())) {
                 val at = Offset(pad.toFloat(), pad.toFloat())
-                drawText(layout, color.copy(alpha = 0.85f), at, shadow = Shadow(color, blurRadius = 11.dp.toPx()))
-                drawText(layout, lerp(color, Color.White, 0.72f), at, shadow = Shadow(color, blurRadius = 4.dp.toPx()))
+                // A soft halo in the fog and a bright but not white core.
+                drawText(layout, color.copy(alpha = 0.5f), at, shadow = Shadow(color.copy(alpha = 0.8f), blurRadius = 10.dp.toPx()))
+                drawText(layout, lerp(color, Color.White, 0.5f), at, shadow = Shadow(color.copy(alpha = 0.9f), blurRadius = 3.dp.toPx()))
             }
             return NeonLine(image, pad, layout.size.width, layout.size.height, layout.getParagraphDirection(0) == ResolvedTextDirection.Rtl)
         }
     }
-}
-
-/** A neon tube's three strokes: wide faint glow, closer glow, near-white core. */
-private class NeonPen(width: Float) {
-    val wide = Stroke(width * 5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-    val mid = Stroke(width * 2.4f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-    val core = Stroke(width, cap = StrokeCap.Round, join = StrokeJoin.Round)
-}
-
-private fun DrawScope.neonPath(path: Path, color: Color, pen: NeonPen, lit: Float) {
-    drawPath(path, color.copy(alpha = 0.16f * lit), style = pen.wide)
-    drawPath(path, color.copy(alpha = 0.38f * lit), style = pen.mid)
-    drawPath(path, lerp(color, Color.White, 0.55f).copy(alpha = 0.35f + 0.65f * lit), style = pen.core)
 }
 
 /** A small prop plane seen from the side, nose to the left, in a [w] × [h] box. */

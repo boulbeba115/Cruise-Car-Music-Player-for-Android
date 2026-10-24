@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -97,11 +98,12 @@ fun SkinBackground(modifier: Modifier = Modifier, coverAccent: Color? = null, co
                 if (texture != null) {
                     // A generated texture (CR-13), toned with the skin's own background so text keeps its contrast.
                     drawCover(texture)
-                    if (colors.isDark) drawRect(colors.background.copy(alpha = 0.35f))
+                    // Neon City's painted night is dark already; a lighter veil keeps its glow.
+                    if (colors.isDark) drawRect(colors.background.copy(alpha = if (style == BackgroundStyle.NeonCity) 0.22f else 0.35f))
                 }
                 when (style) {
                     BackgroundStyle.CoverGlow -> coverGlow(t, accent, deep)
-                    BackgroundStyle.NeonCity -> city?.draw(this, t) ?: neonLights(t, colors.accent, colors.accent2, size.height * NEON_HORIZON)
+                    BackgroundStyle.NeonCity -> city?.draw(this, t) ?: neonFog(t)
                     BackgroundStyle.Carbon -> carbonDash(t, tile.takeIf { texture == null }, colors.accent, colors.accent2)
                     BackgroundStyle.Felt -> felt(t, tile.takeIf { texture == null }, colors.textPrimary, colors.accent2)
                     BackgroundStyle.Aurora -> aurora(t, colors.accent, colors.accent2)
@@ -277,6 +279,26 @@ private fun DrawScope.neonLights(t: Float, cyan: Color, pink: Color, horizon: Fl
     drawRect(
         Brush.verticalGradient(listOf(Color.Transparent, pink.copy(alpha = 0.10f * breathe), Color.Transparent), startY = horizon - size.height * 0.2f, endY = horizon + size.height * 0.05f),
     )
+}
+
+/**
+ * Fog drifting over the painted city (CR-22): three wide banks of teal haze crossing slowly at different heights and
+ * speeds, wrapping round, so the backdrop breathes like the fog in it without anything flashing.
+ */
+private fun DrawScope.neonFog(t: Float) {
+    val fog = Color(0xFF3E6B78)
+    val banks = listOf(Triple(0.58f, 9f, 0.13f), Triple(0.72f, 14f, 0.11f), Triple(0.86f, 6f, 0.09f))
+    for ((i, bank) in banks.withIndex()) {
+        val (yFrac, speed, alpha) = bank
+        val w = size.width * 0.9f
+        val x = ((t * speed + i * size.width * 0.37f) % (size.width + w)) - w / 2
+        val y = size.height * yFrac
+        val r = w / 2
+        // A soft disc flattened into a bank: no hard edge anywhere.
+        scale(1f, 0.28f, pivot = Offset(x, y)) {
+            drawCircle(Brush.radialGradient(listOf(fog.copy(alpha = alpha), Color.Transparent), center = Offset(x, y), radius = r), r, Offset(x, y))
+        }
+    }
 }
 
 // ---- Other skins --------------------------------------------------------------------------------------------------

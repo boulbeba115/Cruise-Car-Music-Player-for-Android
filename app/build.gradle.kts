@@ -10,8 +10,8 @@ android {
 
     defaultConfig {
         applicationId = "com.boulbeba.cruise"
-        versionCode = 8
-        versionName = "1.2.1"
+        versionCode = 9
+        versionName = "1.2.2"
     }
 
     buildTypes {
