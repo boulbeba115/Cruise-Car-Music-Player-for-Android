@@ -2,10 +2,8 @@ package com.boulbeba.cruise.feature.library
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,21 +29,21 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.boulbeba.cruise.core.data.db.TrackRow
-import com.boulbeba.cruise.core.designsystem.component.skinTitle
+import com.boulbeba.cruise.core.data.library.FolderNode
 import com.boulbeba.cruise.core.designsystem.component.CruiseIconButton
+import com.boulbeba.cruise.core.designsystem.component.CruisePill
 import com.boulbeba.cruise.core.designsystem.icon.CruiseIcons
 import com.boulbeba.cruise.core.designsystem.theme.CruiseTheme
 import com.boulbeba.cruise.core.ui.CoverImage
-import com.boulbeba.cruise.core.ui.NavRequests
-import com.boulbeba.cruise.core.ui.VoiceRequests
+import com.boulbeba.cruise.core.ui.GroupItem
 import com.boulbeba.cruise.core.ui.TrackItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -64,69 +62,84 @@ class SearchViewModel @Inject constructor(val actions: TrackActions) : ViewModel
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 }
 
-/** Offline search across the whole library (SPEC §4.5): results grouped as albums, artists and tracks. */
+/** The search box in the Library header (CHANGE_REQUESTS.md CR-02). Opens focused, with the keyboard up. */
 @Composable
-fun SearchScreen(onOpenLibrary: () -> Unit, modifier: Modifier = Modifier, viewModel: SearchViewModel = hiltViewModel()) {
-    val query by viewModel.query.collectAsStateWithLifecycle()
-    val results by viewModel.results.collectAsStateWithLifecycle()
-    val playing by viewModel.actions.player.state.collectAsStateWithLifecycle()
-    val menu = rememberTrackMenu()
+internal fun SearchField(query: String, onQuery: (String) -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = CruiseTheme.colors
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
-    val colors = CruiseTheme.colors
-    Box(modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().padding(horizontal = CruiseTheme.dimens.gutter)) {
-            Text(skinTitle(stringResource(R.string.search_title)), style = CruiseTheme.typography.title, color = colors.textPrimary, modifier = Modifier.padding(top = CruiseTheme.dimens.gutter, bottom = 12.dp))
-            TextField(
-                value = query,
-                onValueChange = { viewModel.query.value = it },
-                singleLine = true,
-                placeholder = { Text(stringResource(R.string.search_hint), style = CruiseTheme.typography.body) },
-                leadingIcon = { Icon(painterResource(CruiseIcons.Search), contentDescription = null, tint = colors.accent) },
-                trailingIcon = {
-                    CruiseIconButton(CruiseIcons.Mic, stringResource(R.string.search_voice), onClick = VoiceRequests::requestListen, size = 56.dp, tint = colors.accent)
-                },
-                textStyle = CruiseTheme.typography.subtitle,
-                shape = RoundedCornerShape(CruiseTheme.dimens.cardRadius),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = colors.surfaceElevated, unfocusedContainerColor = colors.surfaceElevated,
-                    focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent,
-                    focusedTextColor = colors.textPrimary, unfocusedTextColor = colors.textPrimary, cursorColor = colors.accent,
-                ),
-                modifier = Modifier.fillMaxWidth().height(68.dp).focusRequester(focus),
-            )
-            Spacer(Modifier.height(12.dp))
-            if (query.isNotBlank() && results.isEmpty()) {
-                Text(stringResource(R.string.search_none, query), style = CruiseTheme.typography.body, color = colors.textSecondary)
+    TextField(
+        value = query,
+        onValueChange = onQuery,
+        singleLine = true,
+        placeholder = { Text(stringResource(R.string.search_hint), style = CruiseTheme.typography.body) },
+        leadingIcon = { Icon(painterResource(CruiseIcons.Search), contentDescription = null, tint = colors.accent) },
+        trailingIcon = { CruiseIconButton(CruiseIcons.Back, stringResource(R.string.lib_search_close), onClick = onClose, size = 56.dp, tint = colors.textSecondary) },
+        textStyle = CruiseTheme.typography.subtitle,
+        shape = RoundedCornerShape(CruiseTheme.dimens.cardRadius),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = colors.surfaceElevated, unfocusedContainerColor = colors.surfaceElevated,
+            focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent,
+            focusedTextColor = colors.textPrimary, unfocusedTextColor = colors.textPrimary, cursorColor = colors.accent,
+        ),
+        modifier = modifier.height(68.dp).focusRequester(focus),
+    )
+}
+
+/** Instant results across the library, grouped as folders, albums, artists and tracks (SPEC §4.5). */
+@Composable
+internal fun SearchResults(
+    viewModel: SearchViewModel,
+    menu: TrackMenuState,
+    playingPath: String?,
+    folders: List<FolderNode>,
+    onFolder: (String) -> Unit,
+    onAlbum: (key: String, title: String) -> Unit,
+    onArtist: (key: String, name: String) -> Unit,
+) {
+    val query by viewModel.query.collectAsStateWithLifecycle()
+    val results by viewModel.results.collectAsStateWithLifecycle()
+    val albums = remember(results) { results.distinctBy { it.albumKey }.take(20) }
+    val artists = remember(results) { results.filter { it.albumArtist.isNotBlank() || it.artist.isNotBlank() }.distinctBy { it.artistKey }.take(12) }
+    LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(6.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
+        if (results.isEmpty() && folders.isEmpty()) {
+            item { Text(stringResource(R.string.search_none, query), style = CruiseTheme.typography.body, color = CruiseTheme.colors.textSecondary) }
+        }
+        if (folders.isNotEmpty()) {
+            item { Section(R.string.search_folders) }
+            items(folders.take(6), key = { "d:" + it.path }) { f ->
+                val sample = f.row
+                GroupItem(
+                    title = f.name,
+                    subtitle = pluralStringResource(R.plurals.folders_tracks, f.totalTracks, f.totalTracks),
+                    coverKey = sample?.sampleAlbumKey ?: f.path, coverPath = sample?.samplePath.orEmpty(), coverFolder = f.path,
+                    onClick = { onFolder(f.path) },
+                )
             }
-            val albums = remember(results) { results.distinctBy { it.albumKey }.take(20) }
-            val artists = remember(results) { results.map { it.artist }.filter { it.isNotBlank() }.distinct().take(12) }
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
-                if (albums.size > 1) {
-                    item { Section(R.string.search_albums) }
-                    item {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            items(albums, key = { it.albumKey }) { t -> AlbumChip(t) { NavRequests.album.value = t.albumKey; onOpenLibrary() } }
-                        }
-                    }
-                }
-                if (artists.isNotEmpty()) {
-                    item { Section(R.string.search_artists) }
-                    item {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(artists, key = { it }) { a ->
-                                com.boulbeba.cruise.core.designsystem.component.CruisePill(a, onClick = { viewModel.query.value = a })
-                            }
-                        }
-                    }
-                }
-                if (results.isNotEmpty()) item { Section(R.string.search_tracks) }
-                itemsIndexed(results, key = { _, t -> t.path }) { i, t ->
-                    TrackItem(t, onClick = { viewModel.actions.play(results, i) }, onLongClick = { menu.forTrack(t) }, active = t.path == playing.libraryPath)
+        }
+        if (albums.isNotEmpty()) {
+            item { Section(R.string.search_albums) }
+            item {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(albums, key = { it.albumKey }) { t -> AlbumChip(t) { onAlbum(t.albumKey, t.album) } }
                 }
             }
         }
-        TrackMenuHost(menu, viewModel.actions)
+        if (artists.isNotEmpty()) {
+            item { Section(R.string.search_artists) }
+            item {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(artists, key = { it.artistKey }) { t ->
+                        val name = t.albumArtist.ifBlank { t.artist }
+                        CruisePill(name, onClick = { onArtist(t.artistKey, name) })
+                    }
+                }
+            }
+        }
+        if (results.isNotEmpty()) item { Section(R.string.search_tracks) }
+        itemsIndexed(results, key = { _, t -> t.path }) { i, t ->
+            TrackItem(t, onClick = { viewModel.actions.play(results, i) }, onLongClick = { menu.forTrack(t) }, active = t.path == playingPath)
+        }
     }
 }
 
@@ -139,7 +152,6 @@ private fun Section(title: Int) {
 private fun AlbumChip(t: TrackRow, onClick: () -> Unit) {
     Column(Modifier.width(140.dp).clip(RoundedCornerShape(CruiseTheme.dimens.cardRadius)).clickable(onClick = onClick).padding(4.dp)) {
         CoverImage(t.albumKey, t.path, t.folder, t.album, Modifier.size(132.dp), RoundedCornerShape(CruiseTheme.dimens.cardRadius * 0.8f))
-        Text(t.album, style = CruiseTheme.typography.meta, color = CruiseTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(t.album, style = CruiseTheme.typography.meta, color = CruiseTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth())
     }
 }
-

@@ -2,12 +2,13 @@
 <resources>
     <string name="nav_now_playing">Lecture</string>
     <string name="nav_library">Bibliothèque</string>
-    <string name="nav_folders">Dossiers</string>
-    <string name="nav_playlists">Playlists</string>
-    <string name="nav_search">Recherche</string>
     <string name="nav_sound">Son</string>
     <string name="nav_settings">Réglages</string>
 
 
 
+    <string name="access_banner">Cruise ne peut pas encore lire votre musique</string>
+    <string name="access_banner_allow">Autoriser l\'accès</string>
+    <string name="access_banner_close">Fermer</string>
+    <string name="access_refused">L\'accès à votre musique n\'a pas été accordé. Touchez « Autoriser l\'accès » pour réessayer.</string>
 </resources>

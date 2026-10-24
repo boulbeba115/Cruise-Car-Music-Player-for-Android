@@ -28,19 +28,21 @@ import com.boulbeba.cruise.core.audio.ReplayGainMode
 import com.boulbeba.cruise.core.audio.SoundEngine
 import com.boulbeba.cruise.core.audio.SoundSettingsStore
 import com.boulbeba.cruise.core.data.library.LibraryRepository
+import com.boulbeba.cruise.core.data.library.LibraryScanner
 import com.boulbeba.cruise.core.data.db.LibraryDao
 import com.boulbeba.cruise.core.model.MediaIds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.random.Random
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import com.boulbeba.cruise.core.car.CarLog
-import com.boulbeba.cruise.core.car.HeadUnitManager
-import com.boulbeba.cruise.core.car.steering.MediaCommands
-import com.boulbeba.cruise.core.model.FolderScanner
+import com.boulbeba.cruise.core.model.CruiseLog
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
@@ -48,26 +50,23 @@ import java.io.File
 import java.util.concurrent.Executors
 import javax.inject.Inject
 
-/** Intent action that opens Cruise straight into a voice command. */
-const val ACTION_VOICE = "com.boulbeba.cruise.action.VOICE"
-
 /**
- * Background playback (SPEC §4.1). One ExoPlayer behind a [MediaSession]: the notification, the steering wheel,
+ * Background playback (SPEC §4.1). One ExoPlayer behind a [MediaSession]: the notification, media keys,
  * Bluetooth and the UI are all controllers of the same session.
  *
- * Car behaviour: requests audio focus (which makes TW head units route steering keys to Cruise), saves the
+ * Car behaviour: requests audio focus (which makes TW head units send their steering keys to Cruise as media keys), saves the
  * position every 5 s, pauses shortly after the screen turns off so a sleeping unit is never kept awake, and
  * resumes when it wakes.
  */
 @AndroidEntryPoint
-class PlaybackService : MediaSessionService(), MediaCommands {
+class PlaybackService : MediaSessionService() {
 
     @Inject lateinit var store: QueueStore
     @Inject lateinit var settings: PlaybackSettings
-    @Inject lateinit var headUnit: HeadUnitManager
     @Inject lateinit var library: LibraryRepository
     @Inject lateinit var dao: LibraryDao
     @Inject lateinit var sound: SoundSettingsStore
+    @Inject lateinit var scanner: LibraryScanner
 
     private lateinit var exo: ExoPlayer
     private lateinit var player: FadingPlayer
@@ -108,7 +107,7 @@ class PlaybackService : MediaSessionService(), MediaCommands {
                 // Gapless: the next track's decoder starts before the transition, so name the item the event is for.
                 val item = eventTime.timeline.takeIf { eventTime.windowIndex < it.windowCount }
                     ?.getWindow(eventTime.windowIndex, Timeline.Window())?.mediaItem ?: exo.currentMediaItem
-                CarLog.log("player", "decoder $decoderName for ${item?.mediaId?.substringAfterLast('/')}")
+                CruiseLog.log("player", "decoder $decoderName for ${item?.mediaId?.substringAfterLast('/')}")
             }
         })
         session = MediaSession.Builder(this, player)
@@ -117,10 +116,9 @@ class PlaybackService : MediaSessionService(), MediaCommands {
             .build()
 
         restoreQueue(play = false)
+        if (exo.mediaItemCount == 0) startFreshQueue()
         pausedForSleep = store.loadPosition()?.pausedForSleep == true
 
-        headUnit.commands = this
-        headUnit.start()
         ContextCompat.registerReceiver(
             this,
             screenReceiver,
@@ -131,7 +129,7 @@ class PlaybackService : MediaSessionService(), MediaCommands {
             ContextCompat.RECEIVER_NOT_EXPORTED,
         )
         handler.postDelayed(saveTicker, SAVE_INTERVAL_MS)
-        CarLog.log("player", "service created")
+        CruiseLog.log("player", "service created")
     }
 
     /**
@@ -159,7 +157,6 @@ class PlaybackService : MediaSessionService(), MediaCommands {
         savePosition()
         handler.removeCallbacksAndMessages(null)
         runCatching { unregisterReceiver(screenReceiver) }
-        if (headUnit.commands === this) headUnit.commands = null
         session?.run {
             player.release()
             release()
@@ -183,6 +180,25 @@ class PlaybackService : MediaSessionService(), MediaCommands {
         exo.repeatMode = position?.repeatMode ?: Player.REPEAT_MODE_OFF
         exo.prepare()
         if (play) player.play()
+    }
+
+    /**
+     * Fresh install or empty queue (CHANGE_REQUESTS.md CR-03): as soon as the library has music, queue all of it in
+     * shuffle from a random track, paused, so Now Playing always shows a song. Waits for the running scan to finish
+     * (at most [FRESH_SCAN_WAIT_MS]) so the queue holds the whole stick, not just the first files found.
+     */
+    private fun startFreshQueue() {
+        scope.launch {
+            library.trackCount.first { it > 0 }
+            withTimeoutOrNull(FRESH_SCAN_WAIT_MS) { scanner.state.first { !it.running } }
+            if (exo.mediaItemCount > 0) return@launch
+            val tracks = withContext(Dispatchers.IO) { library.allTracks().sortedWith(LibraryRepository.FOLDER_ORDER) }
+            if (tracks.isEmpty() || exo.mediaItemCount > 0) return@launch
+            exo.shuffleModeEnabled = true
+            exo.setMediaItems(tracks.map { MediaItems.fromPath(MediaIds.of(it.path, it.cueStartMs, it.cueEndMs)) }, Random.nextInt(tracks.size), 0)
+            exo.prepare()
+            CruiseLog.log("player", "fresh start: ${tracks.size} tracks in shuffle")
+        }
     }
 
     private fun saveQueue() {
@@ -230,7 +246,7 @@ class PlaybackService : MediaSessionService(), MediaCommands {
         }
 
         override fun onPlayerError(error: PlaybackException) {
-            CarLog.log("player", "error ${error.errorCodeName} on ${exo.currentMediaItem?.mediaId}: ${error.message}")
+            CruiseLog.log("player", "error ${error.errorCodeName} on ${exo.currentMediaItem?.mediaId}: ${error.message}")
             // Skip unplayable files instead of stopping the drive's music; after the last one, behave like the end of
             // the queue (back to the first track, paused) rather than staying stuck in the error state.
             if (exo.hasNextMediaItem()) {
@@ -290,7 +306,7 @@ class PlaybackService : MediaSessionService(), MediaCommands {
             pausedForSleep = true
             player.pause()
             savePosition()
-            CarLog.log("player", "paused for sleep")
+            CruiseLog.log("player", "paused for sleep")
         }
     }
 
@@ -310,90 +326,9 @@ class PlaybackService : MediaSessionService(), MediaCommands {
                 Intent.ACTION_SCREEN_ON -> {
                     handler.removeCallbacks(sleepPause)
                     if (pausedForSleep && settings.resumeOnWake && exo.mediaItemCount > 0) {
-                        CarLog.log("player", "resuming after wake")
+                        CruiseLog.log("player", "resuming after wake")
                         player.play()
                     }
-                }
-            }
-        }
-    }
-
-    // ---- Media commands (steering wheel) ---------------------------------------------------------------------
-
-    override fun playPause() {
-        if (exo.isPlaying) player.pause() else {
-            restoreQueue(play = false)
-            if (exo.playbackState == Player.STATE_IDLE) exo.prepare()
-            player.play()
-        }
-    }
-
-    override fun next() = player.seekToNext()
-
-    override fun previous() = player.seekToPrevious()
-
-    override fun toggleShuffle() {
-        exo.shuffleModeEnabled = !exo.shuffleModeEnabled
-    }
-
-    override fun cycleRepeat() {
-        exo.repeatMode = when (exo.repeatMode) {
-            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
-            Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
-            else -> Player.REPEAT_MODE_OFF
-        }
-    }
-
-    override fun openApp() {
-        appLaunchIntentRaw()?.let { startActivity(it) }
-    }
-
-    /** Opens Cruise listening for a voice command (steering-wheel VOICE button). */
-    override fun voice() {
-        appLaunchIntentRaw()?.let { startActivity(it.setAction(ACTION_VOICE).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)) }
-    }
-
-    override fun nextFolder() = jumpFolder(+1)
-
-    override fun previousFolder() = jumpFolder(-1)
-
-    /** Next/previous album folder: inside the queue first, otherwise the next sibling folder on disk (SPEC SW-2). */
-    private fun jumpFolder(direction: Int) {
-        val count = exo.mediaItemCount
-        if (count == 0) return
-        val current = exo.currentMediaItemIndex
-        fun folderOf(i: Int) = File(exo.getMediaItemAt(i).mediaId).parent
-        val folder = folderOf(current)
-        if (direction > 0) {
-            for (i in current + 1 until count) if (folderOf(i) != folder) {
-                exo.seekTo(i, 0)
-                return
-            }
-        } else {
-            var i = current - 1
-            while (i >= 0 && folderOf(i) == folder) i--
-            if (i >= 0) {
-                val previousFolder = folderOf(i)
-                while (i > 0 && folderOf(i - 1) == previousFolder) i--
-                exo.seekTo(i, 0)
-                return
-            }
-        }
-        val dir = folder?.let(::File) ?: return
-        io.execute {
-            val siblings = dir.parentFile?.let { FolderScanner.list(it).folders }.orEmpty()
-            val start = siblings.indexOfFirst { it.path == dir.path }
-            if (start < 0 || siblings.size < 2) return@execute
-            for (step in 1 until siblings.size) {
-                val candidate = siblings[Math.floorMod(start + direction * step, siblings.size)]
-                val tracks = FolderScanner.tracksRecursive(candidate, limit = 2_000)
-                if (tracks.isNotEmpty()) {
-                    handler.post {
-                        exo.setMediaItems(tracks.map { MediaItems.fromPath(it.path) })
-                        exo.prepare()
-                        player.play()
-                    }
-                    return@execute
                 }
             }
         }
@@ -413,7 +348,7 @@ class PlaybackService : MediaSessionService(), MediaCommands {
             mediaItems: MutableList<MediaItem>,
         ): ListenableFuture<MutableList<MediaItem>> = Futures.immediateFuture(mediaItems.map(MediaItems::resolve).toMutableList())
 
-        /** "Play" from the steering wheel or a reboot while Cruise was not running: continue where it stopped. */
+        /** "Play" from a media key or a reboot while Cruise was not running: continue where it stopped. */
         override fun onPlaybackResumption(
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
@@ -435,5 +370,6 @@ class PlaybackService : MediaSessionService(), MediaCommands {
     private companion object {
         const val SAVE_INTERVAL_MS = 5_000L
         const val RECENT_PLAY_MS = 15_000L
+        const val FRESH_SCAN_WAIT_MS = 10_000L
     }
 }

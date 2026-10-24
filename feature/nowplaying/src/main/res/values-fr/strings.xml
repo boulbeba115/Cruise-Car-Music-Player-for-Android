@@ -7,9 +7,6 @@
     <string name="np_previous">Piste précédente</string>
     <string name="np_shuffle">Aléatoire</string>
     <string name="np_repeat">Répéter</string>
-    <string name="np_empty_title">Prêt quand vous l\'êtes</string>
-    <string name="np_empty_body">Choisissez un dossier de votre clé USB pour lancer la musique.</string>
-    <string name="np_open_folders">Ouvrir les dossiers</string>
     <string name="np_favorite">Favori</string>
     <string name="np_lyrics">Paroles</string>
     <string name="np_queue_open">File d\'attente</string>
@@ -29,5 +26,14 @@
     <string name="np_blind">Mode aveugle</string>
     <string name="np_blind_hint">Toucher : lecture / pause · Glisser ← → : piste · Glisser ↑ ↓ : volume</string>
     <string name="np_blind_exit">Quitter</string>
-    <string name="np_voice">Commande vocale</string>
+    <string name="np_access_title">Autorisez l’accès à votre musique</string>
+    <string name="np_access_body">Cruise lit la musique de l\'appareil, de sa carte SD et des clés USB. Il ne modifie ni ne supprime jamais vos fichiers.</string>
+    <string name="np_access_grant">Autoriser l’accès</string>
+    <string name="np_looking_title">Recherche de votre musique</string>
+    <string name="np_looking_body">Un morceau sera prêt dans un instant.</string>
+    <string name="np_looking_count">%1$d morceaux trouvés…</string>
+    <string name="np_no_music_title">Pas encore de musique</string>
+    <string name="np_no_music_body">Cruise lit la musique du stockage interne, des cartes SD et des clés USB. Ajoutez-en sur l\'un d\'eux et elle démarre ici.</string>
+    <string name="np_queue_az">A–Z</string>
+    <string name="np_queue_play_order">Ordre de lecture</string>
 </resources>

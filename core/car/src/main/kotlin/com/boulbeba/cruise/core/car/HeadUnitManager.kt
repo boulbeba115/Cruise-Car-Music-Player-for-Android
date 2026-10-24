@@ -173,7 +173,6 @@ class HeadUnitManager @Inject constructor(
             KeyAction.ToggleShuffle -> target?.toggleShuffle()
             KeyAction.CycleRepeat -> target?.cycleRepeat()
             KeyAction.OpenCruise -> target?.openApp()
-            KeyAction.Voice -> target?.voice()
             KeyAction.Nothing, KeyAction.UnitDefault -> Unit
         }
     }

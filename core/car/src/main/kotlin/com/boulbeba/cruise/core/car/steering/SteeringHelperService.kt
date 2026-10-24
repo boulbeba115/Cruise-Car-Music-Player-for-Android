@@ -53,6 +53,22 @@ class SteeringHelperService : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     override fun onServiceConnected() {
+        instance = this
         CarLog.log("steering", "helper connected")
+    }
+
+    override fun onDestroy() {
+        if (instance === this) instance = null
+        super.onDestroy()
+    }
+
+    companion object {
+        /** The running helper, for actions only an accessibility service can do (the steering-wheel app's Back). */
+        @Volatile var instance: SteeringHelperService? = null
+            private set
+
+        fun back(): Boolean = instance?.performGlobalAction(GLOBAL_ACTION_BACK) == true
+
+        fun home(): Boolean = instance?.performGlobalAction(GLOBAL_ACTION_HOME) == true
     }
 }

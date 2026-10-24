@@ -8,12 +8,6 @@
     <string name="lib_tab_albums">Albums</string>
     <string name="lib_tab_artists">Artists</string>
     <string name="lib_tab_genres">Genres</string>
-    <string name="lib_tab_tracks">Tracks</string>
-    <string name="lib_tab_years">Years</string>
-    <string name="lib_tab_quality">Quality</string>
-    <string name="lib_tab_recent">Recently added</string>
-    <string name="lib_tab_most">Most played</string>
-    <string name="lib_tab_favorites">Favourites</string>
     <string name="lib_sort">Sort: %1$s</string>
     <string name="sort_title">Title</string>
     <string name="sort_artist">Artist</string>
@@ -22,16 +16,13 @@
     <string name="sort_added">Date added</string>
     <string name="sort_duration">Duration</string>
     <string name="sort_filename">File name</string>
-    <string name="quality_hires">Hi-Res</string>
-    <string name="quality_lossless">Lossless</string>
-    <string name="quality_lossy">Compressed</string>
     <string name="lib_play">Play</string>
     <string name="lib_shuffle">Shuffle</string>
     <string name="lib_albums_count">%1$d albums · %2$d tracks</string>
     <string name="lib_detail_summary">%1$d tracks · %2$s</string>
     <string name="lib_disc">Disc %1$d</string>
     <string name="lib_empty_title">No music yet</string>
-    <string name="lib_empty_body">Plug in your USB stick and allow access to your music. The library fills itself in the background.</string>
+    <string name="lib_empty_body">Cruise looks for music in the internal storage, SD cards and USB sticks. The library fills itself in the background.</string>
     <string name="lib_nothing_here">Nothing here yet.</string>
     <string name="unknown_artist">Unknown artist</string>
 
@@ -45,7 +36,6 @@
     <string name="act_new_playlist">New playlist…</string>
     <string name="act_choose_playlist">Add to which playlist?</string>
 
-    <string name="search_title">Search</string>
     <string name="search_hint">Song, artist, album, folder…</string>
     <string name="search_tracks">Tracks</string>
     <string name="search_albums">Albums</string>
@@ -68,5 +58,28 @@
     <string name="pl_move_up">Move up</string>
     <string name="pl_move_down">Move down</string>
     <string name="pl_queue_name">Drive %1$s</string>
-    <string name="search_voice">Search by voice</string>
+    <string name="lib_tab_folders">Folders</string>
+    <string name="lib_tab_playlists">Playlists</string>
+    <string name="lib_search">Search</string>
+    <string name="lib_search_close">Close search</string>
+    <string name="search_folders">Folders</string>
+    <string name="folders_usb">USB stick (%1$s)</string>
+    <string name="folders_internal">Internal storage</string>
+    <string name="folders_play_all">Play all</string>
+    <string name="folders_shuffle">Shuffle</string>
+    <string name="folders_empty">No music found yet. Music folders from the internal storage, SD cards and USB sticks appear here as soon as they are scanned.</string>
+    <string name="pl_smart_favorites">Favourites</string>
+    <string name="pl_smart_most">Most played</string>
+    <string name="pl_smart_recent">Recently added</string>
+    <string name="pl_smart_hint">Automatic</string>
+    <plurals name="folders_tracks">
+        <item quantity="one">%d track</item>
+        <item quantity="other">%d tracks</item>
+    </plurals>
+    <plurals name="folders_subfolders">
+        <item quantity="one">%d folder</item>
+        <item quantity="other">%d folders</item>
+    </plurals>
+    <string name="folders_sd">SD card (%1$s)</string>
+    <string name="folders_storage">Storage (%1$s)</string>
 </resources>

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -38,8 +39,8 @@ import com.boulbeba.cruise.core.designsystem.theme.NavStyle
 data class NavItem(val key: String, @DrawableRes val icon: Int, val label: String)
 
 /**
- * Vertical rail. Items share the available height equally, so every destination stays reachable on a
- * 400 dp-tall screen as well as on a 1200 dp one.
+ * Vertical rail: the four destinations as one centred group (CHANGE_REQUESTS.md CR-07.0), which fits a 400 dp-tall
+ * screen as well as a 1200 dp one.
  */
 @Composable
 fun CruiseNavRail(
@@ -55,7 +56,7 @@ fun CruiseNavRail(
             .width(CruiseTheme.dimens.railWidth)
             .background(CruiseTheme.colors.surface.copy(alpha = 0.82f))
             .padding(vertical = 8.dp),
-        verticalArrangement = Arrangement.SpaceEvenly,
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
     ) {
         items.forEach { item ->
             NavEntry(
@@ -63,7 +64,7 @@ fun CruiseNavRail(
                 selected = item.key == selectedKey,
                 showLabel = showLabels,
                 onClick = { onSelect(item) },
-                modifier = Modifier.weight(1f, fill = false).fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp),
             )
         }
     }

@@ -20,9 +20,11 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -100,6 +102,14 @@ fun GeneralScreen(modifier: Modifier = Modifier, viewModel: GeneralViewModel = h
                     Spacer(Modifier.height(10.dp))
                     CruisePill(stringResource(R.string.settings_restart), onClick = viewModel::restart, icon = CruiseIcons.Refresh, selected = true)
                 }
+            }
+        }
+        item {
+            SettingsCard(R.string.settings_about) {
+                val context = LocalContext.current
+                val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull().orEmpty() }
+                Text(stringResource(R.string.settings_version, version), style = CruiseTheme.typography.body, color = colors.textPrimary)
+                Text(stringResource(R.string.settings_about_body), style = CruiseTheme.typography.meta, color = colors.textSecondary)
             }
         }
         item { Spacer(Modifier.height(12.dp)) }

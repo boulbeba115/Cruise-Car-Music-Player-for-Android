@@ -1,6 +1,7 @@
 package com.boulbeba.cruise.core.data.library
 
 import com.boulbeba.cruise.core.data.db.AlbumRow
+import com.boulbeba.cruise.core.data.db.FolderRow
 import com.boulbeba.cruise.core.data.db.GroupRow
 import com.boulbeba.cruise.core.data.db.LibraryDao
 import com.boulbeba.cruise.core.data.db.PlayStatEntity
@@ -47,6 +48,20 @@ class LibraryRepository @Inject constructor(
     fun years(): Flow<List<GroupRow>> = onVolumes(dao::years).map { l -> l.sortedByDescending { it.name } }
 
     fun tracks(sort: TrackSort): Flow<List<TrackRow>> = onVolumes(dao::tracks).map { sortTracks(it, sort) }
+
+    /** Folders with music, as a tree (CHANGE_REQUESTS.md CR-04). */
+    fun folderTree(): Flow<FolderTree> = onVolumes(dao::folders).map(::FolderTree)
+
+    fun folderTracks(folder: String): Flow<List<TrackRow>> = onVolumes { dao.folderTracks(folder, it) }.map { it.sortedWith(FOLDER_ORDER) }
+
+    /** Everything in [folder] and below, folder by folder in reading order — "play folder and subfolders". */
+    suspend fun folderTreeTracks(folder: String): List<TrackRow> =
+        dao.folderTreeTracks(folder, folder + File.separator, volumes.mounted.value).sortedWith(FOLDER_ORDER)
+
+    suspend fun randomTrack(): TrackRow? = dao.randomTrack(volumes.mounted.value)
+
+    /** Every visible track, unsorted (start-up random queue). */
+    suspend fun allTracks(): List<TrackRow> = dao.allTracks(volumes.mounted.value)
 
     fun albumTracks(key: String) = onVolumes { dao.albumTracks(key, it) }
     fun artistTracks(key: String) = onVolumes { dao.artistTracks(key, it) }
@@ -151,6 +166,22 @@ class LibraryRepository @Inject constructor(
             TrackSort.Duration -> list.sortedByDescending { it.durationMs }
             TrackSort.Added -> list.sortedByDescending { it.dateAdded }
             TrackSort.FileName -> list.sortedWith(compareBy(NaturalOrder) { File(it.path).name })
+        }
+
+        /** Folder by folder (each path segment in natural order), then file name, then CUE position. */
+        val FOLDER_ORDER: Comparator<TrackRow> = Comparator<TrackRow> { a, b -> comparePaths(a.folder, b.folder) }
+            .thenBy(NaturalOrder) { File(it.filePath).name }
+            .thenBy { it.cueStartMs ?: 0L }
+
+        fun comparePaths(a: String, b: String): Int {
+            if (a == b) return 0
+            val x = a.split('/', '\\')
+            val y = b.split('/', '\\')
+            for (i in 0 until minOf(x.size, y.size)) {
+                val c = NaturalOrder.compare(x[i], y[i])
+                if (c != 0) return c
+            }
+            return x.size - y.size
         }
 
         /** "The Beatles" sorts under B (SPEC §4.5 ignore articles). */

@@ -1,0 +1,11 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960"
+>
+  <!-- A road running to the horizon: two edges and the centre dashes. -->
+  <path
+      android:fillColor="@android:color/white"
+      android:pathData="M120,840L330,120L400,120L210,840ZM750,840L560,120L630,120L840,840ZM450,120L510,120L510,250L450,250ZM450,370L510,370L510,550L450,550ZM450,670L510,670L510,840L450,840Z"/>
+</vector>

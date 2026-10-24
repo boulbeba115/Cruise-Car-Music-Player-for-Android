@@ -1,5 +1,6 @@
 package com.boulbeba.cruise.feature.nowplaying
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -11,13 +12,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.palette.graphics.Palette
+import com.boulbeba.cruise.core.model.MediaIds
+import com.boulbeba.cruise.core.ui.PlaceholderCovers
+import com.boulbeba.cruise.core.designsystem.theme.CruiseTheme
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+/** The current cover and its colours. [placeholder]: no art of its own, the folder's placeholder cover is shown. */
 @Immutable
-data class DecodedArtwork(val image: ImageBitmap?, val accent: Color?, val deep: Color?)
+data class DecodedArtwork(val image: ImageBitmap?, val accent: Color?, val deep: Color?, val placeholder: Boolean = false)
 
 /**
  * Decodes embedded cover art at display size on a background thread (the owner's unit has 1 GB RAM: never decode
@@ -26,12 +32,16 @@ data class DecodedArtwork(val image: ImageBitmap?, val accent: Color?, val deep:
 @Composable
 fun rememberArtwork(bytes: ByteArray?, key: String?, trackPath: String?, targetPx: Int): DecodedArtwork {
     var result by remember { mutableStateOf(DecodedArtwork(null, null, null)) }
-    val folder = trackPath?.let { File(it).parentFile }
-    LaunchedEffect(key, folder?.path, targetPx) {
+    val context = LocalContext.current
+    val skin = CruiseTheme.skin.id
+    val folder = trackPath?.let { File(MediaIds.filePath(it)).parentFile }
+    LaunchedEffect(key, trackPath, targetPx, skin) {
         result = withContext(Dispatchers.IO) {
-            // Embedded art first, then the folder's image (SPEC ART-1, ART-2).
+            // Embedded art first, then the folder's image (SPEC ART-1, ART-2), then the skin's placeholder for this song (CR-08, CR-13).
             val data = bytes ?: folder?.let(::folderImage)?.let { runCatching { it.readBytes() }.getOrNull() }
-            if (data == null) DecodedArtwork(null, null, null) else decode(data, targetPx)
+            data?.let { decode(it, targetPx) }?.takeIf { it.image != null }
+                ?: trackPath?.let { PlaceholderCovers.bitmap(context, skin, it, targetPx) }?.let { withColours(it, placeholder = true) }
+                ?: DecodedArtwork(null, null, null)
         }
     }
     return result
@@ -53,6 +63,10 @@ private fun decode(bytes: ByteArray, targetPx: Int): DecodedArtwork = runCatchin
     while (bounds.outWidth / (sample * 2) >= targetPx && bounds.outHeight / (sample * 2) >= targetPx) sample *= 2
     val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample })
         ?: return DecodedArtwork(null, null, null)
+    withColours(bitmap, placeholder = false)
+}.getOrDefault(DecodedArtwork(null, null, null))
+
+private fun withColours(bitmap: Bitmap, placeholder: Boolean): DecodedArtwork {
     val palette = Palette.from(bitmap).maximumColorCount(12).generate()
     // Grey or black-and-white covers have no colour worth following: keep the skin's accent then.
     fun Palette.Swatch.colourful() = hsl[1] >= 0.25f && hsl[2] in 0.15f..0.85f
@@ -60,5 +74,5 @@ private fun decode(bytes: ByteArray, targetPx: Int): DecodedArtwork = runCatchin
         .firstOrNull { it.colourful() }?.rgb?.let(::Color)
     val deep = listOfNotNull(palette.darkMutedSwatch, palette.darkVibrantSwatch, palette.dominantSwatch)
         .firstOrNull { it.hsl[1] >= 0.15f }?.rgb?.let(::Color)
-    DecodedArtwork(bitmap.asImageBitmap(), accent, deep)
-}.getOrDefault(DecodedArtwork(null, null, null))
+    return DecodedArtwork(bitmap.asImageBitmap(), accent, deep, placeholder)
+}

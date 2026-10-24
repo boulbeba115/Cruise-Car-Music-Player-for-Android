@@ -58,6 +58,14 @@ class DspTest {
         assertEquals(1f, p.preGain, 1e-6f)
     }
 
+    @Test fun treble_lifts_the_highs_and_leaves_the_bass() {
+        val p = SoundEngine.build(SoundSettings(trebleDb = 6f, loudness = false), 44_100, 0f, 1f, 1f, bypass = false)
+        assertEquals(6.0, p.responseDb(16_000.0), 0.6)
+        assertEquals(0.0, p.responseDb(100.0), 0.1)
+        // The headroom takes the boost back, so the treble never clips either.
+        assertTrue(20 * kotlin.math.log10(p.preGain.toDouble()) + p.responseDb(16_000.0) <= 0.15)
+    }
+
     @Test fun loudness_grows_as_volume_drops() {
         val quiet = SoundEngine.build(SoundSettings(loudness = true), 44_100, 0f, 1f, 0.1f, false)
         val loud = SoundEngine.build(SoundSettings(loudness = true), 44_100, 0f, 1f, 0.97f, false)

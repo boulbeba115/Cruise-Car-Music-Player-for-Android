@@ -39,7 +39,9 @@ import org.robolectric.annotation.GraphicsMode
 @Config(sdk = [27], qualifiers = "w1280dp-h660dp-land-mdpi")
 class SkinsScreenshotTest {
 
-    @get:Rule val compose = createAndroidComposeRule<MainActivity>()
+    @get:Rule(order = 0) val storage = GrantStorageRule()
+
+    @get:Rule(order = 1) val compose = createAndroidComposeRule<MainActivity>()
 
     companion object {
         init { PlayerConnection.enabled = false }
@@ -70,6 +72,16 @@ class SkinsScreenshotTest {
         throw AssertionError("'$text' never appeared")
     }
 
+    /** Like [clickText], for icon buttons found by their content description. */
+    private fun clickDescription(label: String) {
+        val matcher = androidx.compose.ui.test.hasContentDescription(label)
+        repeat(50) {
+            if (compose.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()) return click(compose.onAllNodes(matcher)[0])
+            settle(200)
+        }
+        throw AssertionError("'$label' never appeared")
+    }
+
     private fun waitForText(text: String) {
         repeat(50) {
             if (compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()) return
@@ -86,12 +98,12 @@ class SkinsScreenshotTest {
         return ByteArrayOutputStream().also { bmp.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()
     }
 
-    private fun play() {
+    private fun play(withArt: Boolean = true) {
         val path = "/storage/usbdisk0/Music/Kavinsky/OutRun/03 - Nightcall.flac"
         compose.activity.player.preview(
             PlayerUiState(
                 connected = true, hasMedia = true, path = path, libraryPath = path,
-                title = "Nightcall", artist = "Kavinsky", album = "OutRun", artwork = cover(), artworkKey = "nightcall",
+                title = "Nightcall", artist = "Kavinsky", album = "OutRun", artwork = if (withArt) cover() else null, artworkKey = if (withArt) "nightcall" else null,
                 isPlaying = true, positionMs = 95_000, positionSampledAt = SystemClock.elapsedRealtime(), durationMs = 258_000,
                 queueIndex = 2, queueSize = 12,
             ),
@@ -121,8 +133,21 @@ class SkinsScreenshotTest {
     @Test fun skin_daylight() = skin("daylight")
     @Test fun skin_tape() = skin("tape")
 
+    /** Songs without art get a cover from the active skin's own illustrated set (CR-13). */
+    private fun noArt(id: String) {
+        Appearance.setSkin(id)
+        play(withArt = false)
+        // The placeholder decodes on a background thread: step the frozen clock until it has had time to land.
+        repeat(4) { settle(1_500); Thread.sleep(150) }
+        capture("20_skin_${id}_no_art")
+    }
+
+    @Test fun skin_neon_no_art() = noArt("neon")
+    @Test fun skin_midnight_no_art() = noArt("midnight")
+    @Test fun skin_vinyl_no_art() = noArt("vinyl")
+    @Test fun skin_tape_no_art() = noArt("tape")
+
     @Test fun settings_appearance() {
-        waitForText("Ready when you are")
         clickText("Settings")
         waitForText("Vinyl Lounge")
         capture("21_settings_appearance")
@@ -147,7 +172,9 @@ class SkinsScreenshotTest {
     }
 
     @Test fun search() {
-        click(compose.onNodeWithText("Search"))
+        settle(2_000) // start-up: permission check, first scan, first frames
+        clickText("Library")
+        clickDescription("Search")
         capture("25_search")
     }
 

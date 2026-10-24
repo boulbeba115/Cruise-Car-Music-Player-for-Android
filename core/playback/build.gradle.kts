@@ -10,7 +10,6 @@ android {
 
 dependencies {
     api(projects.core.model)
-    implementation(projects.core.car)
     api(projects.core.data)
     api(projects.core.audio)
 

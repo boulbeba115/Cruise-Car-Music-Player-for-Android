@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,7 +53,10 @@ import com.boulbeba.cruise.core.model.AudioFiles
 import com.boulbeba.cruise.core.model.MediaIds
 import com.boulbeba.cruise.core.playback.PlayerConnection
 import com.boulbeba.cruise.core.playback.PlayerUiState
+import com.boulbeba.cruise.core.model.NaturalOrder
+import com.boulbeba.cruise.core.ui.FastScroller
 import com.boulbeba.cruise.core.ui.formatDuration
+import com.boulbeba.cruise.core.ui.scrollLetter
 import com.boulbeba.cruise.core.ui.qualityLabel
 import java.io.File
 import kotlin.math.abs
@@ -67,8 +71,10 @@ fun LyricsPanel(lyrics: Lyrics, state: PlayerUiState, audio: AudioLevels, accent
         }
         return
     }
-    val position = state.positionAt(audio.now)
-    val current = lyrics.synced.indexOfLast { it.timeMs <= position }.coerceAtLeast(0)
+    // Recomposes when the line changes, not on every audio frame (CR-09).
+    val current by remember(lyrics, state) {
+        derivedStateOf { lyrics.synced.indexOfLast { it.timeMs <= state.positionAt(audio.now) }.coerceAtLeast(0) }
+    }
     val list = rememberLazyListState()
     LaunchedEffect(current) { list.animateScrollToItem((current - 2).coerceAtLeast(0)) }
     LazyColumn(modifier, state = list, verticalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(vertical = 48.dp)) {
@@ -89,42 +95,61 @@ fun LyricsPanel(lyrics: Lyrics, state: PlayerUiState, audio: AudioLevels, accent
     }
 }
 
-/** Queue panel (SPEC Q-1): what plays next; tap to jump, remove, move. */
+/**
+ * Queue panel (SPEC Q-1): what plays next; tap to jump, remove, move. Long queues get the fast scroller (CR-14), and the
+ * A–Z switch lists the queue alphabetically so sliding goes through the alphabet; the play order itself is unchanged.
+ */
 @Composable
 fun QueuePanel(queue: List<Pair<String, TrackRow?>>, currentIndex: Int, player: PlayerConnection, onClose: () -> Unit, modifier: Modifier = Modifier) {
     val colors = CruiseTheme.colors
+    var alphabetical by remember { mutableStateOf(false) }
+    val titles = remember(queue) { queue.map { (id, row) -> row?.title ?: AudioFiles.displayName(File(MediaIds.filePath(id))) } }
+    // Positions in the queue, in the order shown.
+    val order = remember(queue, alphabetical) {
+        if (alphabetical) queue.indices.sortedWith { a, b -> NaturalOrder.compare(titles[a], titles[b]) } else queue.indices.toList()
+    }
     val list = rememberLazyListState(initialFirstVisibleItemIndex = (currentIndex - 1).coerceAtLeast(0))
+    LaunchedEffect(alphabetical) { list.scrollToItem(if (alphabetical) 0 else (currentIndex - 1).coerceAtLeast(0)) }
     Column(modifier.fillMaxHeight().clip(RoundedCornerShape(CruiseTheme.dimens.cardRadius)).background(colors.surface.copy(alpha = 0.96f)).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.np_queue, queue.size), style = CruiseTheme.typography.subtitle, color = colors.textPrimary, modifier = Modifier.weight(1f))
+            CruisePill(stringResource(if (alphabetical) R.string.np_queue_play_order else R.string.np_queue_az), onClick = { alphabetical = !alphabetical }, selected = alphabetical)
+            Spacer(Modifier.width(8.dp))
             CruisePill(stringResource(R.string.np_queue_clear), onClick = player::clearQueueExceptCurrent, icon = CruiseIcons.Delete)
             Spacer(Modifier.width(8.dp))
             CruiseIconButton(CruiseIcons.Back, stringResource(R.string.np_close), onClick = onClose)
         }
         Spacer(Modifier.height(8.dp))
-        LazyColumn(state = list, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            itemsIndexed(queue, key = { i, (id, _) -> "$i:$id" }) { i, (id, row) ->
-                val active = i == currentIndex
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth().height(64.dp).clip(RoundedCornerShape(12.dp))
-                        .background(if (active) colors.accent.copy(alpha = 0.18f) else Color.Transparent)
-                        .clickable { player.jumpTo(i) }.padding(horizontal = 8.dp),
-                ) {
-                    Text((i + 1).toString(), style = CruiseTheme.typography.meta, color = colors.textSecondary, modifier = Modifier.width(36.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(row?.title ?: AudioFiles.displayName(File(MediaIds.filePath(id))), style = CruiseTheme.typography.body, color = if (active) colors.accent else colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(row?.artist.orEmpty(), style = CruiseTheme.typography.meta, color = colors.textSecondary, maxLines = 1)
-                    }
-                    if (!active) {
-                        CruiseIconButton(CruiseIcons.Chevron, stringResource(R.string.np_move_up), onClick = { player.moveInQueue(i, i - 1) }, size = 48.dp, modifier = Modifier.graphicsLayer { rotationZ = -90f })
-                        CruiseIconButton(CruiseIcons.Delete, stringResource(R.string.np_remove), onClick = { player.removeFromQueue(i) }, size = 48.dp)
+        Box(Modifier.weight(1f)) {
+            LazyColumn(state = list, verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxSize().padding(end = FAST_SCROLL_GUTTER)) {
+                itemsIndexed(order, key = { _, i -> "$i:${queue[i].first}" }) { _, i ->
+                    val row = queue[i].second
+                    val active = i == currentIndex
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().height(64.dp).clip(RoundedCornerShape(12.dp))
+                            .background(if (active) colors.accent.copy(alpha = 0.18f) else Color.Transparent)
+                            .clickable { player.jumpTo(i) }.padding(horizontal = 8.dp),
+                    ) {
+                        Text((i + 1).toString(), style = CruiseTheme.typography.meta, color = colors.textSecondary, modifier = Modifier.width(36.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(titles[i], style = CruiseTheme.typography.body, color = if (active) colors.accent else colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(row?.artist.orEmpty(), style = CruiseTheme.typography.meta, color = colors.textSecondary, maxLines = 1)
+                        }
+                        if (!active) {
+                            if (!alphabetical) CruiseIconButton(CruiseIcons.Chevron, stringResource(R.string.np_move_up), onClick = { player.moveInQueue(i, i - 1) }, size = 48.dp, modifier = Modifier.graphicsLayer { rotationZ = -90f })
+                            CruiseIconButton(CruiseIcons.Delete, stringResource(R.string.np_remove), onClick = { player.removeFromQueue(i) }, size = 48.dp)
+                        }
                     }
                 }
             }
+            FastScroller(list, order.size, label = { scrollLetter(titles[order[it]]) }, modifier = Modifier.align(Alignment.TopEnd))
         }
     }
 }
+
+/** Room kept free on the right of a list for the fast scroller's handle. */
+private val FAST_SCROLL_GUTTER = 28.dp
 
 /** Codec, rate, depth, bitrate, file — SPEC ART-9. */
 @Composable

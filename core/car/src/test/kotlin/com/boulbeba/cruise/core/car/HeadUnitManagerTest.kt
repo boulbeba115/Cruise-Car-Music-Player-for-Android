@@ -43,7 +43,6 @@ class HeadUnitManagerTest {
         override fun toggleShuffle() { log += "shuffle" }
         override fun cycleRepeat() { log += "repeat" }
         override fun openApp() { log += "open" }
-        override fun voice() { log += "voice" }
     }
 
     private lateinit var mapping: KeyMappingStore
@@ -125,10 +124,5 @@ class HeadUnitManagerTest {
         press(42)
         assertTrue(42 in mapping.knownCodes())
         assertEquals(42, manager.lastKeys.value.last().code)
-    }
-
-    @Test fun voice_key_starts_a_voice_command() {
-        press(KeyMappingStore.VOICE_KEY)
-        assertEquals(listOf("voice"), commands.log)
     }
 }

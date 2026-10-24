@@ -8,12 +8,6 @@
     <string name="lib_tab_albums">Albums</string>
     <string name="lib_tab_artists">Artistes</string>
     <string name="lib_tab_genres">Genres</string>
-    <string name="lib_tab_tracks">Titres</string>
-    <string name="lib_tab_years">Années</string>
-    <string name="lib_tab_quality">Qualité</string>
-    <string name="lib_tab_recent">Ajouts récents</string>
-    <string name="lib_tab_most">Les plus écoutés</string>
-    <string name="lib_tab_favorites">Favoris</string>
     <string name="lib_sort">Tri : %1$s</string>
     <string name="sort_title">Titre</string>
     <string name="sort_artist">Artiste</string>
@@ -22,16 +16,13 @@
     <string name="sort_added">Date d\'ajout</string>
     <string name="sort_duration">Durée</string>
     <string name="sort_filename">Nom de fichier</string>
-    <string name="quality_hires">Hi-Res</string>
-    <string name="quality_lossless">Sans perte</string>
-    <string name="quality_lossy">Compressé</string>
     <string name="lib_play">Lecture</string>
     <string name="lib_shuffle">Aléatoire</string>
     <string name="lib_albums_count">%1$d albums · %2$d titres</string>
     <string name="lib_detail_summary">%1$d titres · %2$s</string>
     <string name="lib_disc">Disque %1$d</string>
     <string name="lib_empty_title">Pas encore de musique</string>
-    <string name="lib_empty_body">Branchez votre clé USB et autorisez l\'accès à votre musique. La bibliothèque se remplit en arrière-plan.</string>
+    <string name="lib_empty_body">Cruise cherche la musique dans le stockage interne, les cartes SD et les clés USB. La bibliothèque se remplit en arrière-plan.</string>
     <string name="lib_nothing_here">Rien ici pour l\'instant.</string>
     <string name="unknown_artist">Artiste inconnu</string>
 
@@ -45,7 +36,6 @@
     <string name="act_new_playlist">Nouvelle playlist…</string>
     <string name="act_choose_playlist">Ajouter à quelle playlist ?</string>
 
-    <string name="search_title">Recherche</string>
     <string name="search_hint">Titre, artiste, album, dossier…</string>
     <string name="search_tracks">Titres</string>
     <string name="search_albums">Albums</string>
@@ -68,5 +58,28 @@
     <string name="pl_move_up">Monter</string>
     <string name="pl_move_down">Descendre</string>
     <string name="pl_queue_name">Trajet %1$s</string>
-    <string name="search_voice">Recherche vocale</string>
+    <string name="lib_tab_folders">Dossiers</string>
+    <string name="lib_tab_playlists">Playlists</string>
+    <string name="lib_search">Rechercher</string>
+    <string name="lib_search_close">Fermer la recherche</string>
+    <string name="search_folders">Dossiers</string>
+    <string name="folders_usb">Clé USB (%1$s)</string>
+    <string name="folders_internal">Stockage interne</string>
+    <string name="folders_play_all">Tout lire</string>
+    <string name="folders_shuffle">Aléatoire</string>
+    <string name="folders_empty">Pas encore de musique. Les dossiers de musique du stockage interne, des cartes SD et des clés USB apparaissent ici dès qu\'ils sont analysés.</string>
+    <string name="pl_smart_favorites">Favoris</string>
+    <string name="pl_smart_most">Les plus écoutés</string>
+    <string name="pl_smart_recent">Ajouts récents</string>
+    <string name="pl_smart_hint">Automatique</string>
+    <plurals name="folders_tracks">
+        <item quantity="one">%d morceau</item>
+        <item quantity="other">%d morceaux</item>
+    </plurals>
+    <plurals name="folders_subfolders">
+        <item quantity="one">%d dossier</item>
+        <item quantity="other">%d dossiers</item>
+    </plurals>
+    <string name="folders_sd">Carte SD (%1$s)</string>
+    <string name="folders_storage">Stockage (%1$s)</string>
 </resources>

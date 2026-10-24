@@ -22,10 +22,21 @@ enum class CoverStyle {
 }
 
 /** The animated backdrop behind every screen. */
-enum class BackgroundStyle { CoverGlow, RetroGrid, Carbon, WarmGrain, Aurora, Stripes, Plain }
+enum class BackgroundStyle { CoverGlow, NeonCity, Carbon, Felt, Aurora, Stripes, Plain }
 
 /** The animated music (progress) bar. */
-enum class BarStyle { Waveform, NeonWave, LedSegments, Groove, Hairline }
+enum class BarStyle {
+    Waveform,
+    /** A sine wave that follows the music (Aurora). */
+    Wavy,
+    /** A glass tube filling with light (Neon City). */
+    NeonTube,
+    LedSegments,
+    Groove,
+    Hairline,
+    /** Two reels and the tape between them, with a tape counter (Tape Deck). */
+    Tape,
+}
 
 /** How the navigation marks the current destination. */
 enum class NavStyle { Pill, Glow, Block, Underline }
@@ -55,6 +66,8 @@ data class Skin(
     val dynamicAccent: Boolean = false,
     /** Soft light around accents (neon). */
     val glow: Boolean = false,
+    /** Title and artist drawn as lit neon signs (Neon City). */
+    val neonSigns: Boolean = false,
 )
 
 object Skins {
@@ -67,6 +80,7 @@ object Skins {
     private val manrope = family(R.font.manrope_regular, R.font.manrope_bold, R.font.manrope_extrabold)
     private val orbitron = family(R.font.orbitron_regular, R.font.orbitron_bold)
     private val audiowide = FontFamily(Font(R.font.audiowide))
+    private val tiltNeon = FontFamily(Font(R.font.tilt_neon_regular, FontWeight.Normal), Font(R.font.tilt_neon_regular, FontWeight.Bold))
     private val shareTech = FontFamily(Font(R.font.share_tech_mono))
     private val playfair = family(R.font.playfair_display_regular, R.font.playfair_display_bold)
     private val spaceGrotesk = family(R.font.space_grotesk_regular, R.font.space_grotesk_bold)
@@ -79,9 +93,9 @@ object Skins {
     )
     val NeonDrive = Skin(
         id = "neon", name = R.string.skin_neon, tagline = R.string.skin_neon_tagline,
-        colors = NeonColors, display = audiowide, body = orbitron, displayWeight = FontWeight.Normal, uppercaseTitles = true,
-        corners = 0.45f, cover = CoverStyle.Neon, background = BackgroundStyle.RetroGrid, bar = BarStyle.NeonWave,
-        nav = NavStyle.Glow, glow = true,
+        colors = NeonColors, display = tiltNeon, body = audiowide, displayWeight = FontWeight.Normal,
+        corners = 0.6f, cover = CoverStyle.Neon, background = BackgroundStyle.NeonCity, bar = BarStyle.NeonTube,
+        nav = NavStyle.Glow, glow = true, neonSigns = true,
     )
     val AmberCockpit = Skin(
         id = "amber", name = R.string.skin_amber, tagline = R.string.skin_amber_tagline,
@@ -92,12 +106,12 @@ object Skins {
     val VinylLounge = Skin(
         id = "vinyl", name = R.string.skin_vinyl, tagline = R.string.skin_vinyl_tagline,
         colors = VinylColors, display = playfair, body = manrope, corners = 1.15f,
-        cover = CoverStyle.Vinyl, background = BackgroundStyle.WarmGrain, bar = BarStyle.Groove, nav = NavStyle.Underline,
+        cover = CoverStyle.Vinyl, background = BackgroundStyle.Felt, bar = BarStyle.Groove, nav = NavStyle.Underline,
     )
     val Aurora = Skin(
         id = "aurora", name = R.string.skin_aurora, tagline = R.string.skin_aurora_tagline,
         colors = AuroraColors, display = spaceGrotesk, body = spaceGrotesk, corners = 1.5f,
-        cover = CoverStyle.Liquid, background = BackgroundStyle.Aurora, bar = BarStyle.Waveform, nav = NavStyle.Pill,
+        cover = CoverStyle.Liquid, background = BackgroundStyle.Aurora, bar = BarStyle.Wavy, nav = NavStyle.Pill,
     )
     val OledPure = Skin(
         id = "oled", name = R.string.skin_oled, tagline = R.string.skin_oled_tagline,
@@ -113,7 +127,7 @@ object Skins {
     val TapeDeck = Skin(
         id = "tape", name = R.string.skin_tape, tagline = R.string.skin_tape_tagline,
         colors = TapeColors, display = spaceGrotesk, body = manrope, corners = 0.8f,
-        cover = CoverStyle.Cassette, background = BackgroundStyle.Stripes, bar = BarStyle.Waveform, nav = NavStyle.Block,
+        cover = CoverStyle.Cassette, background = BackgroundStyle.Stripes, bar = BarStyle.Tape, nav = NavStyle.Block,
     )
 
     val all: List<Skin> = listOf(Midnight, NeonDrive, AmberCockpit, VinylLounge, TapeDeck, Aurora, OledPure, Daylight)

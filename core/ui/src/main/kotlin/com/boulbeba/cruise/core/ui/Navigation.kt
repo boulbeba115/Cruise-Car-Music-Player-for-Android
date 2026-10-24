@@ -13,17 +13,19 @@ object NavRequests {
     val album = MutableStateFlow<String?>(null)
 }
 
-/** Voice requests from outside the voice overlay: the steering wheel, a mic button, another app's "play …". */
-object VoiceRequests {
-    /** Bumped to start listening (a counter, so the same request twice still triggers). */
-    val listen = MutableStateFlow(0)
-    /** Words that are already known (an assistant's "play …"): no listening needed. */
-    val query = MutableStateFlow<String?>(null)
-
-    fun requestListen() { listen.value++ }
-}
-
 /** An audio file opened from another app, played once the player is connected. */
 object PlayRequests {
     val path = MutableStateFlow<String?>(null)
+}
+
+/**
+ * Storage access (CHANGE_REQUESTS.md CR-03): the app shell asks for it on launch and keeps [granted] current;
+ * screens that need it call [request] to ask again.
+ */
+object StorageAccess {
+    val granted = MutableStateFlow(true)
+    /** Bumped to ask the shell to show the permission request (a counter, so asking twice still triggers). */
+    val asks = MutableStateFlow(0)
+
+    fun request() { asks.value++ }
 }

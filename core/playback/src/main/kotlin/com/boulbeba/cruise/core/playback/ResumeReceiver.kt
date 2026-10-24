@@ -9,7 +9,7 @@ import android.content.Intent
 import android.os.SystemClock
 import android.view.KeyEvent
 import androidx.media3.session.MediaButtonReceiver
-import com.boulbeba.cruise.core.car.CarLog
+import com.boulbeba.cruise.core.model.CruiseLog
 import java.io.File
 
 /**
@@ -26,14 +26,14 @@ class ResumeReceiver : BroadcastReceiver() {
         if (!position.wasPlaying && !position.pausedForSleep) return
         val first = store.loadQueue().getOrNull(position.index) ?: return
         if (!File(first).canRead()) {
-            CarLog.log("player", "boot resume waits for ${File(first).parent} (${intent.action})")
+            CruiseLog.log("player", "boot resume waits for ${File(first).parent} (${intent.action})")
             return
         }
         // Once per boot: wall-clock time of the boot, rounded so small clock adjustments do not count.
         val bootId = (System.currentTimeMillis() - SystemClock.elapsedRealtime()) / 60_000
         if (prefs.lastBootResumed == bootId) return
         prefs.lastBootResumed = bootId
-        CarLog.log("player", "boot resume (${intent.action})")
+        CruiseLog.log("player", "boot resume (${intent.action})")
         context.sendBroadcast(
             Intent(Intent.ACTION_MEDIA_BUTTON)
                 .setComponent(ComponentName(context, MediaButtonReceiver::class.java))

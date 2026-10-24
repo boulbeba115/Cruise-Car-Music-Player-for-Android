@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wheel_app_name">Cruise Wheel</string>
+    <string name="wheel_channel">Volant</string>
+    <string name="wheel_running">Les boutons du volant sont gérés par Cruise Wheel</string>
+
+    <string name="tab_buttons">Boutons</string>
+    <string name="tab_report">Rapport voiture</string>
+    <string name="tab_tools">Outils</string>
+
+    <string name="status_title">État</string>
+    <string name="status_tw_yes">Autoradio TW détecté : écoute du volant</string>
+    <string name="status_tw_link_off">Autoradio TW détecté, mais la liaison MCU n\'est pas encore ouverte</string>
+    <string name="status_tw_no">Ce n\'est pas un autoradio TW : le volant ne peut pas être lu ici</string>
+    <string name="status_helper_on">Assistant actif : les écrans de l\'autoradio sont fermés pour les boutons remappés</string>
+    <string name="status_helper_off">Activez l\'assistant pour que les boutons remappés n\'ouvrent plus les écrans de l\'autoradio</string>
+    <string name="status_helper_open">Ouvrir les réglages</string>
+    <string name="status_smart_calls">Le bouton téléphone décroche et raccroche</string>
+    <string name="status_smart_calls_hint">Pendant un appel entrant ou en cours, cela passe avant vos règles.</string>
+
+    <string name="live_title">Derniers boutons</string>
+    <string name="live_empty">Appuyez sur un bouton du volant…</string>
+    <string name="live_short">court</string>
+    <string name="live_long">maintenu</string>
+
+    <string name="rules_title">Règles</string>
+    <string name="rules_empty">Aucune règle : chaque bouton fait ce que l\'autoradio fait par défaut.</string>
+    <string name="rules_add">Ajouter une règle</string>
+    <string name="rules_export">Exporter vers l\'USB</string>
+    <string name="rules_import">Importer depuis l\'USB</string>
+    <string name="rules_exported">Enregistré dans %1$s</string>
+    <string name="rules_imported">%1$d règles importées</string>
+    <string name="rules_no_file">Aucun fichier de règles sur la clé USB (cruise-wheel/mapping.json).</string>
+    <string name="rules_media_note">Ce bouton arrive aussi à l\'app de musique comme touche multimédia.</string>
+
+    <string name="trigger_tap">Appui court</string>
+    <string name="trigger_hold">Appui long</string>
+    <string name="trigger_double">Double appui</string>
+    <string name="trigger_combo">Deux boutons ensemble</string>
+
+    <string name="add_title">Nouvelle règle</string>
+    <string name="add_step_trigger">1. Quand</string>
+    <string name="add_step_button">2. Quel bouton</string>
+    <string name="add_step_button_two">2. Quels deux boutons</string>
+    <string name="add_press_now">Appuyez dessus sur le volant, ou choisissez-le ci-dessous.</string>
+    <string name="add_step_action">3. Faire</string>
+    <string name="add_pick_app">Choisir l\'app</string>
+    <string name="add_save">Enregistrer</string>
+    <string name="add_cancel">Annuler</string>
+
+    <string name="action_PlayPause">Lecture / pause</string>
+    <string name="action_Next">Morceau suivant</string>
+    <string name="action_Previous">Morceau précédent</string>
+    <string name="action_Stop">Arrêt</string>
+    <string name="action_VolumeUp">Volume +</string>
+    <string name="action_VolumeDown">Volume −</string>
+    <string name="action_Mute">Muet</string>
+    <string name="action_AnswerCall">Décrocher</string>
+    <string name="action_RejectCall">Refuser l\'appel</string>
+    <string name="action_HangUp">Raccrocher</string>
+    <string name="action_OpenApp">Ouvrir une app</string>
+    <string name="action_Home">Écran d\'accueil</string>
+    <string name="action_Back">Retour</string>
+    <string name="action_VoiceAssistant">Assistant vocal</string>
+    <string name="action_Nothing">Rien (bloquer le bouton)</string>
+
+    <string name="report_intro">Découvrez quelles fonctions de la voiture cet autoradio expose. Lancez l\'écoute, puis faites chaque étape dans la voiture : le rapport montre les signaux qui ont changé pendant ce temps.</string>
+    <string name="report_start">Lancer l\'écoute</string>
+    <string name="report_stop">Arrêter l\'écoute</string>
+    <string name="report_stats">MCU : %1$d identifiants, %2$d messages · diffusions : %3$d</string>
+    <string name="report_step_start">Commencer</string>
+    <string name="report_step_done">Terminé</string>
+    <string name="report_found">Trouvé</string>
+    <string name="report_nothing">Rien vu</string>
+    <string name="report_save">Enregistrer le rapport sur l\'USB</string>
+    <string name="report_saved">Rapport enregistré : %1$s (report.html, report.json)</string>
+    <string name="report_save_failed">Impossible d\'écrire le rapport (clé USB absente ou en lecture seule).</string>
+</resources>

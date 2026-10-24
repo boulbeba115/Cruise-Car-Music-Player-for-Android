@@ -120,6 +120,28 @@ interface LibraryDao {
     )
     suspend fun search(query: String, volumes: List<String>, limit: Int): List<TrackRow>
 
+    /** Every folder that holds tracks, with what the folder browser shows for it (CHANGE_REQUESTS.md CR-04). */
+    @Query(
+        """SELECT folder, MIN(volume) AS volume, COUNT(*) AS trackCount, SUM(durationMs) AS durationMs,
+        COUNT(DISTINCT albumKey) AS albumCount, MIN(albumKey) AS sampleAlbumKey, MIN(path) AS samplePath,
+        MAX(album) AS album, MAX(albumArtist) AS albumArtist, MAX(year) AS year
+        FROM tracks WHERE $VISIBLE GROUP BY folder""",
+    )
+    fun folders(volumes: List<String>): Flow<List<FolderRow>>
+
+    @Query("SELECT $ROW FROM tracks WHERE $VISIBLE AND folder = :folder")
+    fun folderTracks(folder: String, volumes: List<String>): Flow<List<TrackRow>>
+
+    /** Tracks of [folder] and every folder below it ([prefix] = folder + "/"; no LIKE, paths may contain _ or %). */
+    @Query("SELECT $ROW FROM tracks WHERE $VISIBLE AND (folder = :folder OR substr(folder, 1, length(:prefix)) = :prefix)")
+    suspend fun folderTreeTracks(folder: String, prefix: String, volumes: List<String>): List<TrackRow>
+
+    @Query("SELECT $ROW FROM tracks WHERE $VISIBLE")
+    suspend fun allTracks(volumes: List<String>): List<TrackRow>
+
+    @Query("SELECT $ROW FROM tracks WHERE $VISIBLE ORDER BY RANDOM() LIMIT 1")
+    suspend fun randomTrack(volumes: List<String>): TrackRow?
+
     @Query("SELECT $ROW FROM tracks WHERE path IN (:paths)")
     suspend fun rowsByPath(paths: List<String>): List<TrackRow>
 
@@ -198,3 +220,16 @@ interface LibraryDao {
 data class GainRow(val rgTrackGain: Float?, val rgTrackPeak: Float?, val rgAlbumGain: Float?, val rgAlbumPeak: Float?, val albumKey: String)
 
 data class PlaylistRow(val id: Long, val name: String, val modified: Long, val sourceFile: String?, val trackCount: Int, val firstPath: String?)
+
+data class FolderRow(
+    val folder: String,
+    val volume: String,
+    val trackCount: Int,
+    val durationMs: Long,
+    val albumCount: Int,
+    val sampleAlbumKey: String,
+    val samplePath: String,
+    val album: String,
+    val albumArtist: String,
+    val year: Int,
+)

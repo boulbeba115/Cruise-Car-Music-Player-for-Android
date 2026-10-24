@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,6 +50,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -64,7 +66,7 @@ import com.boulbeba.cruise.core.designsystem.theme.CoverStyle
 import com.boulbeba.cruise.core.designsystem.theme.CruiseTheme
 import com.boulbeba.cruise.core.playback.PlayerConnection
 import com.boulbeba.cruise.core.playback.PlayerUiState
-import com.boulbeba.cruise.core.ui.VoiceRequests
+import com.boulbeba.cruise.core.ui.StorageAccess
 import com.boulbeba.cruise.core.ui.qualityLabel
 import java.util.Locale
 
@@ -79,7 +81,6 @@ private enum class Panel { None, Lyrics, Queue, Info }
  */
 @Composable
 fun NowPlayingScreen(
-    onOpenFolders: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: NowPlayingViewModel = hiltViewModel(),
 ) {
@@ -121,7 +122,10 @@ fun NowPlayingScreen(
         val maxW = maxWidth
         val maxH = maxHeight
         if (!state.hasMedia) {
-            EmptyState(onOpenFolders)
+            val granted by StorageAccess.granted.collectAsStateWithLifecycle()
+            val scan by viewModel.scan.collectAsStateWithLifecycle()
+            val count by viewModel.trackCount.collectAsStateWithLifecycle()
+            EmptyState(granted, scanning = scan.running, filesSeen = scan.filesSeen, hasMusic = count > 0)
             return@BoxWithConstraints
         }
         val portrait = CruiseTheme.layout.isPortrait
@@ -192,8 +196,9 @@ fun NowPlayingScreen(
 @Composable
 private fun AnimatedCover(state: PlayerUiState, art: DecodedArtwork, audio: AudioLevels, accent: Color, accent2: Color, size: Dp) {
     // Keyed on the decoded cover: the new art scales in over the old one once it is ready.
+    val shown = art.image
     AnimatedContent(
-        targetState = art.image,
+        targetState = shown,
         transitionSpec = { (fadeIn(tween(320)) + scaleIn(tween(360), initialScale = 0.92f)) togetherWith fadeOut(tween(180)) },
         label = "cover",
     ) { image ->
@@ -225,18 +230,27 @@ private fun TrackPanel(
     val glow = if (skin.glow) Shadow(accent.copy(alpha = 0.8f), blurRadius = 24f) else null
     Column(modifier, verticalArrangement = Arrangement.Center) {
         val title = track?.title?.takeIf { it.isNotBlank() } ?: state.title
-        AnimatedContent(title, transitionSpec = { (fadeIn(tween(300)) + slideInHorizontally { it / 10 }) togetherWith fadeOut(tween(150)) }, label = "title") { t ->
-            Text(
-                skinTitle(t),
-                style = (if (big) type.display else type.title).copy(shadow = glow),
-                color = colors.textPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Spacer(Modifier.height(6.dp))
         val artist = track?.artist?.takeIf { it.isNotBlank() } ?: state.artist
-        if (artist.isNotBlank()) {
-            Text(artist, style = type.subtitle, color = if (big) accent else colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        if (skin.neonSigns) {
+            // Neon City (CHANGE_REQUESTS.md CR-07.4): title and artist are lit signs that flicker on with each track.
+            val lit by rememberNeonFlicker(title)
+            NeonSignText(skinTitle(title), accent2, type.display, lit, maxLines = 2)
             Spacer(Modifier.height(4.dp))
+            if (artist.isNotBlank()) NeonSignText(artist, accent, type.subtitle, lit)
+            Spacer(Modifier.height(8.dp))
+        } else {
+            AnimatedContent(title, transitionSpec = { (fadeIn(tween(300)) + slideInHorizontally { it / 10 }) togetherWith fadeOut(tween(150)) }, label = "title") { t ->
+                Text(
+                    skinTitle(t),
+                    style = (if (big) type.display else type.title).copy(shadow = glow),
+                    color = colors.textPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            if (artist.isNotBlank()) {
+                Text(artist, style = type.subtitle, color = if (big) accent else colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.height(4.dp))
+            }
         }
         val quality = track?.let { qualityLabel(it.codec, it.sampleRate, it.bitDepth, it.lossless) }
             ?: state.path?.substringAfterLast('.', "")?.uppercase(Locale.ROOT).orEmpty()
@@ -245,31 +259,51 @@ private fun TrackPanel(
                 .filter { it.isNotBlank() }.joinToString("  ·  "),
             style = type.meta, color = colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis,
         )
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(24.dp))
         AnimatedMusicBar(state, audio, accent, accent2, onSeek = player::seekTo)
         Spacer(Modifier.height(16.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            CruiseIconButton(
-                CruiseIcons.Shuffle, stringResource(R.string.np_shuffle), onClick = player::toggleShuffle,
-                size = dimens.secondaryControl, tint = if (state.shuffle) accent else colors.textSecondary,
-            )
-            CruiseIconButton(CruiseIcons.Previous, stringResource(R.string.np_previous), onClick = player::previous, size = dimens.primaryControl)
-            CruiseIconButton(
-                icon = if (state.isPlaying) CruiseIcons.Pause else CruiseIcons.Play,
-                contentDescription = stringResource(if (state.isPlaying) R.string.np_pause else R.string.np_play),
-                onClick = player::playPause,
-                size = dimens.playButton,
-                filled = true,
-            )
-            CruiseIconButton(CruiseIcons.Next, stringResource(R.string.np_next), onClick = player::next, size = dimens.primaryControl)
-            CruiseIconButton(
-                if (state.repeatMode == Player.REPEAT_MODE_ONE) CruiseIcons.RepeatOne else CruiseIcons.Repeat,
-                stringResource(R.string.np_repeat), onClick = player::cycleRepeat, size = dimens.secondaryControl,
-                tint = if (state.repeatMode != Player.REPEAT_MODE_OFF) accent else colors.textSecondary,
-            )
+        // One rule for every skin (CHANGE_REQUESTS.md CR-07.0): fixed gaps, centred under the music bar. On narrow
+        // screens the gaps shrink first, then the buttons, so all five always fit at their proportions.
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val buttons = dimens.secondaryControl * 2 + dimens.primaryControl * 2 + dimens.playButton
+            val gap = ((maxWidth - buttons) / 4).coerceIn(8.dp, dimens.gutter)
+            val scale = ((maxWidth - gap * 4) / buttons).coerceAtMost(1f)
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(gap, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CruiseIconButton(
+                    CruiseIcons.Shuffle, stringResource(R.string.np_shuffle), onClick = player::toggleShuffle,
+                    size = dimens.secondaryControl * scale, tint = if (state.shuffle) accent else colors.textSecondary,
+                )
+                CruiseIconButton(CruiseIcons.Previous, stringResource(R.string.np_previous), onClick = player::previous, size = dimens.primaryControl * scale)
+                CruiseIconButton(
+                    icon = if (state.isPlaying) CruiseIcons.Pause else CruiseIcons.Play,
+                    contentDescription = stringResource(if (state.isPlaying) R.string.np_pause else R.string.np_play),
+                    onClick = player::playPause,
+                    size = dimens.playButton * scale,
+                    filled = true,
+                )
+                CruiseIconButton(CruiseIcons.Next, stringResource(R.string.np_next), onClick = player::next, size = dimens.primaryControl * scale)
+                CruiseIconButton(
+                    if (state.repeatMode == Player.REPEAT_MODE_ONE) CruiseIcons.RepeatOne else CruiseIcons.Repeat,
+                    stringResource(R.string.np_repeat), onClick = player::cycleRepeat, size = dimens.secondaryControl * scale,
+                    tint = if (state.repeatMode != Player.REPEAT_MODE_OFF) accent else colors.textSecondary,
+                )
+            }
         }
-        Spacer(Modifier.height(10.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+        Spacer(Modifier.height(20.dp))
+        // The smaller actions as one group, centred like the transport row.
+        Row(
+            Modifier
+                .align(Alignment.CenterHorizontally)
+                .clip(RoundedCornerShape(50))
+                .background(colors.surface.copy(alpha = 0.55f))
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             val small = dimens.minTouchTarget
             CruiseIconButton(
                 if (favorite) CruiseIcons.Favorite else CruiseIcons.FavoriteBorder, stringResource(R.string.np_favorite),
@@ -283,26 +317,39 @@ private fun TrackPanel(
             }
             CruiseIconButton(CruiseIcons.Playlist, stringResource(R.string.np_queue_open), onClick = { onPanel(Panel.Queue) }, size = small, tint = colors.textSecondary)
             CruiseIconButton(CruiseIcons.Info, stringResource(R.string.np_info), onClick = { onPanel(Panel.Info) }, size = small, tint = colors.textSecondary)
-            CruiseIconButton(CruiseIcons.Mic, stringResource(R.string.np_voice), onClick = VoiceRequests::requestListen, size = small, tint = colors.textSecondary)
             CruiseIconButton(CruiseIcons.Gesture, stringResource(R.string.np_blind), onClick = onBlind, size = small, tint = colors.textSecondary)
         }
     }
 }
 
+/**
+ * Before the first song is ready (CHANGE_REQUESTS.md CR-03): music being found, or none yet. Never sends the driver
+ * elsewhere: as soon as the library has music the player loads a song and this screen goes away. Missing storage access
+ * is shown by the app shell as a banner over the player, not here (CR-12).
+ */
 @Composable
-private fun EmptyState(onOpenFolders: () -> Unit) {
-    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+private fun EmptyState(granted: Boolean, scanning: Boolean, filesSeen: Int, hasMusic: Boolean) {
+    val colors = CruiseTheme.colors
+    Column(Modifier.fillMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Box(
-            Modifier.size(140.dp).clip(RoundedCornerShape(CruiseTheme.dimens.coverRadius)).background(CruiseTheme.colors.surfaceElevated),
+            Modifier.size(140.dp).clip(RoundedCornerShape(CruiseTheme.dimens.coverRadius)).background(colors.surfaceElevated),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(painterResource(CruiseIcons.Note), contentDescription = null, tint = CruiseTheme.colors.accent, modifier = Modifier.size(72.dp))
+            when {
+                granted && (scanning || hasMusic) -> CircularProgressIndicator(color = colors.accent, strokeWidth = 5.dp, modifier = Modifier.size(72.dp))
+                else -> Icon(painterResource(CruiseIcons.Library), contentDescription = null, tint = colors.accent, modifier = Modifier.size(72.dp))
+            }
         }
         Spacer(Modifier.height(24.dp))
-        Text(skinTitle(stringResource(R.string.np_empty_title)), style = CruiseTheme.typography.title, color = CruiseTheme.colors.textPrimary)
+        val (title, body) = when {
+            granted && (scanning || hasMusic) -> R.string.np_looking_title to R.string.np_looking_body
+            else -> R.string.np_no_music_title to R.string.np_no_music_body
+        }
+        Text(skinTitle(stringResource(title)), style = CruiseTheme.typography.title, color = colors.textPrimary, textAlign = TextAlign.Center)
         Spacer(Modifier.height(8.dp))
-        Text(stringResource(R.string.np_empty_body), style = CruiseTheme.typography.body, color = CruiseTheme.colors.textSecondary)
-        Spacer(Modifier.height(24.dp))
-        CruisePill(stringResource(R.string.np_open_folders), onClick = onOpenFolders, icon = CruiseIcons.Folder, selected = true)
+        Text(
+            if (granted && scanning && filesSeen > 0) stringResource(R.string.np_looking_count, filesSeen) else stringResource(body),
+            style = CruiseTheme.typography.body, color = colors.textSecondary, textAlign = TextAlign.Center,
+        )
     }
 }

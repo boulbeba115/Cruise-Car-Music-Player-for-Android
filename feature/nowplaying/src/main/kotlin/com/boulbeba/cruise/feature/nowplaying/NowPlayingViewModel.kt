@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.boulbeba.cruise.core.data.db.PlayStatEntity
 import com.boulbeba.cruise.core.data.db.TrackRow
 import com.boulbeba.cruise.core.data.library.LibraryRepository
+import com.boulbeba.cruise.core.data.library.LibraryScanner
 import com.boulbeba.cruise.core.data.tags.LrcParser
 import com.boulbeba.cruise.core.data.tags.LyricLine
 import com.boulbeba.cruise.core.model.MediaIds
@@ -34,11 +35,16 @@ class NowPlayingViewModel @Inject constructor(
     val player: PlayerConnection,
     private val library: LibraryRepository,
     private val playbackSettings: PlaybackSettings,
+    scanner: LibraryScanner,
 ) : ViewModel() {
     /** Read when the screen opens, so a change in Settings applies the next time Now Playing is shown. */
     val gesturesEnabled: Boolean get() = playbackSettings.screenGestures
 
     val state = player.state
+
+    /** For the screen shown before the first song is ready: scan progress and how much music is known. */
+    val scan = scanner.state
+    val trackCount = library.trackCount.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     private val currentPath = player.state.map { it.libraryPath }.distinctUntilChanged()
 

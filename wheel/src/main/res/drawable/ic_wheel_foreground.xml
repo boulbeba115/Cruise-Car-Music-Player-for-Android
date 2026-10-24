@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 108 dp canvas, 66 dp safe zone: a steering wheel. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:strokeColor="@color/wheel_accent"
+        android:strokeWidth="5"
+        android:fillColor="#00000000"
+        android:pathData="M54,27a27,27 0,1 1,0 54a27,27 0,1 1,0 -54z" />
+    <path
+        android:fillColor="@color/wheel_accent"
+        android:pathData="M29,52h18v6h-18z M61,52h18v6h-18z M51,60h6v19h-6z M54,48a7,7 0,1 1,0 14a7,7 0,1 1,0 -14z" />
+</vector>

@@ -157,18 +157,24 @@ private fun MiniCover(skin: Skin) {
         val art = Brush.linearGradient(listOf(c.accent, c.accent2))
         when (skin.cover) {
             CoverStyle.Vinyl -> {
-                drawCircle(Color(0xFF0D0D0D))
-                for (k in 0 until 8) drawCircle(Color.White.copy(alpha = 0.06f), size.minDimension / 2 * (0.5f + k * 0.06f), style = Stroke(1f))
-                drawCircle(art, size.minDimension * 0.18f)
+                // Picture disc: the art covers the record, grooves on top, a small label.
+                drawCircle(art, size.minDimension * 0.46f)
+                for (k in 0 until 8) drawCircle(Color.Black.copy(alpha = 0.18f), size.minDimension / 2 * (0.42f + k * 0.065f), style = Stroke(1f))
+                drawCircle(c.accent, size.minDimension * 0.08f)
+                drawLine(Color(0xFFD9DCE3), Offset(size.width * 0.95f, size.height * 0.05f), Offset(size.width * 0.62f, size.height * 0.30f), 4f)
             }
             CoverStyle.Gauge -> {
                 drawArc(c.surfaceElevated, 135f, 270f, false, style = Stroke(8f))
-                drawArc(c.accent, 135f, 170f, false, style = Stroke(8f))
-                drawCircle(art, size.minDimension * 0.26f)
+                drawArc(Brush.sweepGradient(listOf(c.accent2, c.accent)), 135f, 170f, false, style = Stroke(8f))
+                drawCircle(art, size.minDimension * 0.30f)
+                val a = Math.toRadians(135.0 + 200.0)
+                drawLine(c.accent, center, Offset(center.x + kotlin.math.cos(a).toFloat() * size.minDimension * 0.44f, center.y + sin(a).toFloat() * size.minDimension * 0.44f), 4f)
+                drawCircle(Color(0xFF15181D), size.minDimension * 0.07f)
             }
             CoverStyle.Neon -> {
-                drawRoundRect(Brush.sweepGradient(listOf(c.accent, c.accent2, c.accent)), cornerRadius = CornerRadius(radius.toPx()), style = Stroke(6f))
-                drawRoundRect(art, Offset(10f, 10f), Size(size.width - 20f, size.height - 20f), CornerRadius(radius.toPx()), alpha = 0.8f)
+                drawRoundRect(Color(0xFF0C1020), cornerRadius = CornerRadius(radius.toPx()))
+                for ((w, a) in listOf(10f to 0.2f, 4f to 1f)) drawRoundRect(c.accent2.copy(alpha = a), Offset(6f, 6f), Size(size.width - 12f, size.height - 12f), CornerRadius(radius.toPx()), style = Stroke(w))
+                drawRoundRect(art, Offset(16f, 16f), Size(size.width - 32f, size.height - 32f), CornerRadius(radius.toPx() * 0.6f), alpha = 0.9f)
             }
             CoverStyle.Minimal -> drawRoundRect(art, Offset(12f, 12f), Size(size.width - 24f, size.height - 24f), CornerRadius(radius.toPx() * 0.6f))
             CoverStyle.Sleeve -> {
@@ -199,8 +205,8 @@ private fun MiniCover(skin: Skin) {
                 val w = size.width
                 val h = w * 0.64f
                 val top = (size.height - h) / 2
-                drawRoundRect(Color(0xFF2B2722), Offset(0f, top), Size(w, h), CornerRadius(w * 0.05f))
-                drawRoundRect(Color(0xFFF3E9D6), Offset(w * 0.07f, top + h * 0.09f), Size(w * 0.86f, h * 0.56f), CornerRadius(w * 0.03f))
+                drawRoundRect(Color(0xFF2E3946), Offset(0f, top), Size(w, h), CornerRadius(w * 0.05f))
+                drawRoundRect(Color(0xFFF1F4F6), Offset(w * 0.07f, top + h * 0.09f), Size(w * 0.86f, h * 0.56f), CornerRadius(w * 0.03f))
                 drawRoundRect(art, Offset(w * 0.09f, top + h * 0.12f), Size(h * 0.48f, h * 0.48f), CornerRadius(w * 0.02f))
                 drawRoundRect(Color(0xFF0D0B09), Offset(w * 0.30f, top + h * 0.36f), Size(w * 0.50f, h * 0.22f), CornerRadius(h * 0.08f))
                 drawCircle(Color(0xFFEDE6DA), w * 0.045f, Offset(w * 0.42f, top + h * 0.47f))
@@ -224,15 +230,28 @@ private fun MiniBar(style: BarStyle) {
                     drawRoundRect(if (i < n * 0.4f) c.accent else c.textSecondary.copy(alpha = 0.3f), Offset(i * slot + slot * 0.2f, mid - h / 2), Size(slot * 0.6f, h), CornerRadius(slot * 0.3f))
                 }
             }
-            BarStyle.NeonWave -> {
+            BarStyle.Wavy -> {
                 var prev = Offset(0f, mid)
                 for (s in 1..40) {
                     val x = size.width * 0.45f * s / 40
-                    val p = Offset(x, mid + sin(s * 0.8f) * size.height * 0.35f)
-                    drawLine(c.accent, prev, p, 3f)
+                    val p = Offset(x, mid + sin(s * 0.9f) * size.height * 0.3f)
+                    drawLine(c.accent, prev, p, 4f)
                     prev = p
                 }
-                drawLine(c.textSecondary.copy(alpha = 0.35f), Offset(size.width * 0.45f, mid), Offset(size.width, mid), 2f)
+                drawLine(c.textSecondary.copy(alpha = 0.35f), Offset(size.width * 0.45f, mid), Offset(size.width, mid), 3f)
+                drawCircle(c.textPrimary, 7f, prev)
+            }
+            BarStyle.NeonTube -> {
+                drawRoundRect(c.textSecondary.copy(alpha = 0.3f), Offset(0f, mid - 5f), Size(size.width, 10f), CornerRadius(5f), style = Stroke(1.5f))
+                for ((w, a) in listOf(12f to 0.18f, 6f to 0.5f, 2.5f to 1f)) drawLine(c.accent.copy(alpha = a), Offset(4f, mid), Offset(size.width * 0.45f, mid), w)
+            }
+            BarStyle.Tape -> {
+                val r = size.height * 0.45f
+                drawCircle(c.textPrimary.copy(alpha = 0.8f), r, Offset(r, mid), style = Stroke(3f))
+                drawCircle(c.textPrimary.copy(alpha = 0.8f), r, Offset(size.width - r, mid), style = Stroke(3f))
+                drawLine(c.accent, Offset(r, mid + r), Offset(size.width * 0.45f, mid + r), 4f)
+                drawLine(c.textSecondary.copy(alpha = 0.5f), Offset(size.width * 0.45f, mid + r), Offset(size.width - r, mid + r), 4f)
+                drawRect(c.accent2, Offset(size.width * 0.45f - 4f, mid + r - 8f), Size(8f, 10f))
             }
             BarStyle.LedSegments -> {
                 val n = 18

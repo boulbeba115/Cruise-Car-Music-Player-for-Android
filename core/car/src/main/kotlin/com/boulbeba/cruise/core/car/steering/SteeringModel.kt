@@ -19,8 +19,6 @@ enum class KeyAction {
     ToggleShuffle,
     CycleRepeat,
     OpenCruise,
-    /** Start a voice command ("play …"). */
-    Voice,
     Nothing,
 }
 
@@ -39,7 +37,6 @@ interface MediaCommands {
     fun toggleShuffle()
     fun cycleRepeat()
     fun openApp()
-    fun voice()
 }
 
 /**
@@ -104,7 +101,6 @@ class KeyMappingStore @Inject constructor(@ApplicationContext context: Context) 
             (PHONE_KEY to PressType.Long) to KeyAction.UnitDefault,
             (MIXER_KEY to PressType.Short) to KeyAction.NextFolder,
             (MIXER_KEY to PressType.Long) to KeyAction.ToggleShuffle,
-            (VOICE_KEY to PressType.Short) to KeyAction.Voice,
         )
 
         fun default(code: Int, press: PressType): KeyAction = DEFAULTS[code to press] ?: KeyAction.UnitDefault

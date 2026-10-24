@@ -43,6 +43,7 @@ object SoundEngine {
                 if (kotlin.math.abs(g) > 0.05f && f < rate * 0.45) filters += Biquad.peaking(f, g.toDouble(), 1.41, rate)
             }
             if (kotlin.math.abs(s.bassDb) > 0.05f) filters += Biquad.lowShelf(90.0, s.bassDb.toDouble(), rate)
+            if (kotlin.math.abs(s.trebleDb) > 0.05f && rate > 16_000) filters += Biquad.highShelf(6000.0, s.trebleDb.toDouble(), rate)
             if (s.loudness) {
                 // Equal-loudness compensation: the quieter the volume, the more lows and some highs (ISO 226 shape).
                 val quiet = (1f - vol).coerceIn(0f, 1f)

@@ -54,52 +54,55 @@ val DaylightColors = CruiseColors(
     accent2 = Color(0xFF6A4DD6),
 )
 
+/** Neon City: night blue-black, electric cyan and neon red-pink, an amber sign as third colour. */
 val NeonColors = CruiseColors(
-    background = Color(0xFF0B0420),
-    surface = Color(0xFF180A31),
-    surfaceElevated = Color(0xFF241044),
-    accent = Color(0xFFFF2BD6),
-    onAccent = Color(0xFF1A0016),
-    textPrimary = Color(0xFFFBEFFF),
-    textSecondary = Color(0xFFC3A6E6),
-    divider = Color(0xFF34195C),
-    success = Color(0xFF2EF2FF),
-    warning = Color(0xFFFFE65C),
-    error = Color(0xFFFF5470),
-    isDark = true,
-    accent2 = Color(0xFF2EF2FF),
-)
-
-val AmberColors = CruiseColors(
-    background = Color(0xFF070605),
-    surface = Color(0xFF14110C),
-    surfaceElevated = Color(0xFF1F1A12),
-    accent = Color(0xFFFFB000),
-    onAccent = Color(0xFF1A1000),
-    textPrimary = Color(0xFFFFE9BC),
-    textSecondary = Color(0xFFB79566),
-    divider = Color(0xFF2E2618),
-    success = Color(0xFF9BE15D),
+    background = Color(0xFF05070F),
+    surface = Color(0xFF0C1020),
+    surfaceElevated = Color(0xFF141A30),
+    accent = Color(0xFF19E6FF),
+    onAccent = Color(0xFF001A1F),
+    textPrimary = Color(0xFFF2FBFF),
+    textSecondary = Color(0xFF93A9C9),
+    divider = Color(0xFF1C2440),
+    success = Color(0xFF19E6FF),
     warning = Color(0xFFFFB000),
-    error = Color(0xFFFF5A1F),
+    error = Color(0xFFFF2A6D),
     isDark = true,
-    accent2 = Color(0xFFFF5A1F),
+    accent2 = Color(0xFFFF2A6D),
 )
 
-val VinylColors = CruiseColors(
-    background = Color(0xFF150D09),
-    surface = Color(0xFF23160F),
-    surfaceElevated = Color(0xFF2F2016),
-    accent = Color(0xFFE8A75D),
-    onAccent = Color(0xFF241303),
-    textPrimary = Color(0xFFF7ECDA),
-    textSecondary = Color(0xFFC4A98B),
-    divider = Color(0xFF3B2A1D),
-    success = Color(0xFF9CC48A),
-    warning = Color(0xFFE8A75D),
-    error = Color(0xFFD9583A),
+/** Sport Cockpit: graphite, cool white type, signal red for needle and red zone, ice blue for the LEDs. */
+val AmberColors = CruiseColors(
+    background = Color(0xFF0B0D10),
+    surface = Color(0xFF15181D),
+    surfaceElevated = Color(0xFF1E232A),
+    accent = Color(0xFFFF3B3B),
+    onAccent = Color(0xFF1A0000),
+    textPrimary = Color(0xFFF1F4F7),
+    textSecondary = Color(0xFF9AA4B1),
+    divider = Color(0xFF2A3038),
+    success = Color(0xFF5ED8FF),
+    warning = Color(0xFFFFC857),
+    error = Color(0xFFFF3B3B),
     isDark = true,
-    accent2 = Color(0xFFC4572F),
+    accent2 = Color(0xFF5ED8FF),
+)
+
+/** Vinyl Lounge: ink navy and felt, cream type, record-label red and a soft hi-fi teal. */
+val VinylColors = CruiseColors(
+    background = Color(0xFF0B1020),
+    surface = Color(0xFF131A2E),
+    surfaceElevated = Color(0xFF1B2440),
+    accent = Color(0xFFE84855),
+    onAccent = Color(0xFF1A0508),
+    textPrimary = Color(0xFFF5EEDC),
+    textSecondary = Color(0xFFB3B8C9),
+    divider = Color(0xFF242E4A),
+    success = Color(0xFF6EC3D4),
+    warning = Color(0xFFF2C14E),
+    error = Color(0xFFE84855),
+    isDark = true,
+    accent2 = Color(0xFF6EC3D4),
 )
 
 val AuroraColors = CruiseColors(
@@ -136,19 +139,19 @@ val OledColors = CruiseColors(
 
 val LocalCruiseColors = staticCompositionLocalOf { MidnightColors }
 
-/** Tape Deck: an 80s cassette deck — warm black, cream type, orange and teal stripes. */
+/** Tape Deck, "chrome tape": blue-black, smoky shell, cool greys, teal and coral-pink stripes. */
 val TapeColors = CruiseColors(
-    background = Color(0xFF14120F),
-    surface = Color(0xFF1F1B17),
-    surfaceElevated = Color(0xFF2B2620),
-    accent = Color(0xFFFF8A3D),
-    onAccent = Color(0xFF2A1200),
-    textPrimary = Color(0xFFF6EBD6),
-    textSecondary = Color(0xFFC4B59C),
-    divider = Color(0xFF3A332B),
-    success = Color(0xFF2EC4B6),
-    warning = Color(0xFFFFC145),
-    error = Color(0xFFFF6B6B),
+    background = Color(0xFF0E1218),
+    surface = Color(0xFF161C24),
+    surfaceElevated = Color(0xFF1F2731),
+    accent = Color(0xFF2DE1C2),
+    onAccent = Color(0xFF00211B),
+    textPrimary = Color(0xFFEAF2F7),
+    textSecondary = Color(0xFF9AA9B7),
+    divider = Color(0xFF27313D),
+    success = Color(0xFF2DE1C2),
+    warning = Color(0xFFFFC857),
+    error = Color(0xFFFF6B8B),
     isDark = true,
-    accent2 = Color(0xFF2EC4B6),
+    accent2 = Color(0xFFFF6B8B),
 )

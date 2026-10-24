@@ -8,8 +8,6 @@ import com.boulbeba.cruise.core.data.db.GroupRow
 import com.boulbeba.cruise.core.data.db.TrackRow
 import com.boulbeba.cruise.core.data.library.AlbumSort
 import com.boulbeba.cruise.core.data.library.LibraryScanner
-import com.boulbeba.cruise.core.data.library.Quality
-import com.boulbeba.cruise.core.data.library.TrackSort
 import com.boulbeba.cruise.core.ui.NavRequests
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,15 +23,15 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-enum class LibraryTab { Albums, Artists, Genres, Tracks, Years, Quality, Recent, MostPlayed, Favorites }
+/** The Library's tabs (CHANGE_REQUESTS.md CR-02). Folders first: the music lives on the stick as folders. */
+enum class LibraryTab { Folders, Albums, Artists, Genres, Playlists }
 
-/** Where the library is: a tab, or a detail page reached from it (SPEC §5.2). */
+/** A detail page opened from the Albums, Artists or Genres tab (SPEC §5.2). */
 sealed interface LibraryRoute {
     data object Home : LibraryRoute
     data class Album(val key: String, val title: String) : LibraryRoute
     data class Artist(val key: String, val name: String) : LibraryRoute
     data class Genre(val name: String) : LibraryRoute
-    data class Year(val year: Int) : LibraryRoute
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -48,10 +46,8 @@ class LibraryViewModel @Inject constructor(
     private val repo = actions.library
     private fun <T> Flow<T>.state(initial: T): StateFlow<T> = stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initial)
 
-    val tab = MutableStateFlow(runCatching { LibraryTab.valueOf(prefs.getString("tab", "Albums")!!) }.getOrDefault(LibraryTab.Albums))
+    val tab = MutableStateFlow(runCatching { LibraryTab.valueOf(prefs.getString("tab2", "Folders")!!) }.getOrDefault(LibraryTab.Folders))
     val albumSort = MutableStateFlow(runCatching { AlbumSort.valueOf(prefs.getString("albumSort", "Artist")!!) }.getOrDefault(AlbumSort.Artist))
-    val trackSort = MutableStateFlow(runCatching { TrackSort.valueOf(prefs.getString("trackSort", "Artist")!!) }.getOrDefault(TrackSort.Artist))
-    val quality = MutableStateFlow(Quality.HiRes)
 
     private val _stack = MutableStateFlow<List<LibraryRoute>>(listOf(LibraryRoute.Home))
     val stack: StateFlow<List<LibraryRoute>> = _stack.asStateFlow()
@@ -61,19 +57,6 @@ class LibraryViewModel @Inject constructor(
     val albums: StateFlow<List<AlbumRow>> = albumSort.flatMapLatest { repo.albums(it) }.state(emptyList())
     val artists: StateFlow<List<GroupRow>> = repo.artists().state(emptyList())
     val genres: StateFlow<List<GroupRow>> = repo.genres().state(emptyList())
-    val years: StateFlow<List<GroupRow>> = repo.years().state(emptyList())
-
-    /** Tracks for the list tabs. */
-    val tabTracks: StateFlow<List<TrackRow>> = tab.flatMapLatest { t ->
-        when (t) {
-            LibraryTab.Tracks -> trackSort.flatMapLatest { repo.tracks(it) }
-            LibraryTab.Quality -> quality.flatMapLatest { repo.quality(it) }
-            LibraryTab.Recent -> repo.recentlyAdded()
-            LibraryTab.MostPlayed -> repo.mostPlayed()
-            LibraryTab.Favorites -> repo.favorites()
-            else -> flowOf(emptyList())
-        }
-    }.state(emptyList())
 
     /** Tracks of the detail page on top of the stack. */
     val detailTracks: StateFlow<List<TrackRow>> = _stack.flatMapLatest { s ->
@@ -81,32 +64,39 @@ class LibraryViewModel @Inject constructor(
             is LibraryRoute.Album -> repo.albumTracks(r.key)
             is LibraryRoute.Artist -> repo.artistTracks(r.key)
             is LibraryRoute.Genre -> repo.genreTracks(r.name)
-            is LibraryRoute.Year -> repo.yearTracks(r.year)
             LibraryRoute.Home -> flowOf(emptyList())
         }
     }.state(emptyList())
 
-    val playlists = actions.playlists.state(emptyList())
-
     init {
+        // "Go to album / open folder" from a long-press menu anywhere: switch to the matching tab.
         viewModelScope.launch {
             NavRequests.album.collect { key ->
                 if (key != null) {
-                    open(LibraryRoute.Album(key, ""))
                     NavRequests.album.value = null
+                    show(LibraryTab.Albums, LibraryRoute.Album(key, ""))
                 }
             }
+        }
+        viewModelScope.launch {
+            // The Folders tab's own view model opens the folder and clears the request.
+            NavRequests.folder.collect { path -> if (path != null) selectTab(LibraryTab.Folders) }
         }
     }
 
     fun selectTab(t: LibraryTab) {
         tab.value = t
         _stack.value = listOf(LibraryRoute.Home)
-        prefs.edit().putString("tab", t.name).apply()
+        prefs.edit().putString("tab2", t.name).apply()
+    }
+
+    /** Opens [route] as a detail page of tab [t] (from search results and menus). */
+    fun show(t: LibraryTab, route: LibraryRoute) {
+        selectTab(t)
+        _stack.value = listOf(LibraryRoute.Home, route)
     }
 
     fun setAlbumSort(s: AlbumSort) { albumSort.value = s; prefs.edit().putString("albumSort", s.name).apply() }
-    fun setTrackSort(s: TrackSort) { trackSort.value = s; prefs.edit().putString("trackSort", s.name).apply() }
 
     fun open(route: LibraryRoute) { _stack.value = _stack.value + route }
 

@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
-import com.boulbeba.cruise.core.car.CarLog
+import com.boulbeba.cruise.core.model.CruiseLog
 import com.boulbeba.cruise.core.data.library.LibraryScanner
 import com.boulbeba.cruise.core.data.library.LibrarySettings
 import com.boulbeba.cruise.core.data.library.Volumes
@@ -35,7 +35,7 @@ class CarEvents @Inject constructor(
     fun start() {
         val storage = object : BroadcastReceiver() {
             override fun onReceive(c: Context, intent: Intent) {
-                CarLog.log("storage", "${intent.action} ${intent.data}")
+                CruiseLog.log("storage", "${intent.action} ${intent.data}")
                 volumes.refresh()
                 if (intent.action == Intent.ACTION_MEDIA_MOUNTED && settings.autoScan) scanner.scan()
             }
@@ -52,7 +52,7 @@ class CarEvents @Inject constructor(
         val lights = object : BroadcastReceiver() {
             override fun onReceive(c: Context, intent: Intent) {
                 val on = intent.action == HEADLIGHTS_ON
-                CarLog.log("lights", if (on) "headlights on" else "headlights off")
+                CruiseLog.log("lights", if (on) "headlights on" else "headlights off")
                 Appearance.setHeadlights(on)
             }
         }
@@ -65,6 +65,12 @@ class CarEvents @Inject constructor(
             delay(2_500)
             scanner.scan()
         }
+    }
+
+    /** Storage access was just granted: the volumes are readable now, so scan straight away (CHANGE_REQUESTS.md CR-03). */
+    fun onStorageGranted() {
+        volumes.refresh()
+        scanner.scan()
     }
 
     companion object {

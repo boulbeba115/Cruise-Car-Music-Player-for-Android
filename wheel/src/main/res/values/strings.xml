@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wheel_app_name">Cruise Wheel</string>
+    <string name="wheel_channel">Steering wheel</string>
+    <string name="wheel_running">Steering-wheel buttons are handled by Cruise Wheel</string>
+
+    <string name="tab_buttons">Buttons</string>
+    <string name="tab_report">Car report</string>
+    <string name="tab_tools">Tools</string>
+
+    <string name="status_title">Status</string>
+    <string name="status_tw_yes">TW head unit found: listening to the wheel</string>
+    <string name="status_tw_link_off">TW head unit found, but the MCU link is not open yet</string>
+    <string name="status_tw_no">This is not a TW head unit: the wheel cannot be read here</string>
+    <string name="status_helper_on">Helper on: the unit\'s own screens are closed for buttons you remap</string>
+    <string name="status_helper_off">Turn on the helper so remapped buttons stop opening the unit\'s screens</string>
+    <string name="status_helper_open">Open settings</string>
+    <string name="status_smart_calls">Phone button answers and ends calls</string>
+    <string name="status_smart_calls_hint">While a call rings or is active, this comes before your rules.</string>
+
+    <string name="live_title">Last buttons</string>
+    <string name="live_empty">Press a button on the steering wheel…</string>
+    <string name="live_short">short</string>
+    <string name="live_long">hold</string>
+
+    <string name="rules_title">Rules</string>
+    <string name="rules_empty">No rules: every button does what the unit does by default.</string>
+    <string name="rules_add">Add a rule</string>
+    <string name="rules_export">Export to USB</string>
+    <string name="rules_import">Import from USB</string>
+    <string name="rules_exported">Saved to %1$s</string>
+    <string name="rules_imported">%1$d rules imported</string>
+    <string name="rules_no_file">No mapping file found on the USB stick (cruise-wheel/mapping.json).</string>
+    <string name="rules_media_note">This button also reaches the music app as a media key.</string>
+
+    <string name="trigger_tap">Short press</string>
+    <string name="trigger_hold">Hold</string>
+    <string name="trigger_double">Double press</string>
+    <string name="trigger_combo">Two buttons together</string>
+
+    <string name="add_title">New rule</string>
+    <string name="add_step_trigger">1. When</string>
+    <string name="add_step_button">2. Which button</string>
+    <string name="add_step_button_two">2. Which two buttons</string>
+    <string name="add_press_now">Press it on the wheel now, or pick it below.</string>
+    <string name="add_step_action">3. Do</string>
+    <string name="add_pick_app">Choose the app</string>
+    <string name="add_save">Save rule</string>
+    <string name="add_cancel">Cancel</string>
+
+    <string name="action_PlayPause">Play / pause</string>
+    <string name="action_Next">Next track</string>
+    <string name="action_Previous">Previous track</string>
+    <string name="action_Stop">Stop</string>
+    <string name="action_VolumeUp">Volume up</string>
+    <string name="action_VolumeDown">Volume down</string>
+    <string name="action_Mute">Mute</string>
+    <string name="action_AnswerCall">Answer call</string>
+    <string name="action_RejectCall">Reject call</string>
+    <string name="action_HangUp">Hang up</string>
+    <string name="action_OpenApp">Open an app</string>
+    <string name="action_Home">Home screen</string>
+    <string name="action_Back">Back</string>
+    <string name="action_VoiceAssistant">Voice assistant</string>
+    <string name="action_Nothing">Nothing (block the button)</string>
+
+    <string name="report_intro">Find out which car features this unit exposes. Start listening, then do each step in the car: the report shows which signals changed while you did it.</string>
+    <string name="report_start">Start listening</string>
+    <string name="report_stop">Stop listening</string>
+    <string name="report_stats">MCU: %1$d ids, %2$d messages · broadcasts: %3$d</string>
+    <string name="report_step_start">Start</string>
+    <string name="report_step_done">Done</string>
+    <string name="report_found">Found</string>
+    <string name="report_nothing">Nothing seen</string>
+    <string name="report_save">Save report to USB</string>
+    <string name="report_saved">Report saved: %1$s (report.html, report.json)</string>
+    <string name="report_save_failed">Could not write the report (USB stick missing or read-only).</string>
+</resources>

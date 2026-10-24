@@ -423,7 +423,7 @@ A **UI scale** setting (80–140 %) lets any screen fine-tune the size of text a
 │ ≋  │                                                                      │
 │ ⚙  │   [♥]  [EQ: Highway]  [Queue · 12 left · 47 min]   [Lyrics]          │
 └────┴──────────────────────────────────────────────────────────────────────┘
- nav rail: Now Playing · Library · Folders · Playlists · Search · Sound · Settings
+ nav rail: Now Playing · Library · Sound · Settings   (1.2.0, CHANGE_REQUESTS.md CR-02)
 ```
 
 - Background: pre-blurred cover with palette gradient; cross-fades on track change.
@@ -452,9 +452,10 @@ A **UI scale** setting (80–140 %) lets any screen fine-tune the size of text a
 - The breadcrumb is tappable at every level; the system back gesture goes up one level.
 - Folder scroll position is remembered per folder.
 
-**Library** — chip row at the top: Albums · Artists · Album artists · Genres ·
-Tracks · Years · Composers · Quality · Collections. Under it: grid (albums) or list
-(others), with the view's sort/group menu and the A–Z scrubber.
+**Library** (1.2.0) — one section, tab row at the top: **Folders · Albums · Artists · Genres · Playlists**, search
+field in the header (results grouped as folders, albums, artists, tracks). Folders is built from the library and shows
+only folders with music; Favourites, Most played and Recently added are automatic playlists. Under the tabs: grid
+(albums) or list (others), with the view's sort menu and the A–Z scrubber.
 
 **Album / artist / genre detail** — large header with cover and palette
 background, actions (play, shuffle, add to queue), then tracks grouped by disc.
@@ -462,14 +463,12 @@ background, actions (play, shuffle, add to queue), then tracks grouped by disc.
 **Queue** — slide-over panel from the right edge (reachable from anywhere), drag
 handles, current track pinned at the top.
 
-**Search** — big field with instant results grouped by type.
+**Sound** (1.2.0) — profile cards (Natural, Mégane tuned, Bass boost, Vocal clarity, Highway, Night, Rock, Pop,
+Electronic, Jazz, Classical, Custom), then Bass, Treble and "Best sound for: Everyone / Driver". Custom shows the
+10-band EQ over the live spectrum. Hold-to-compare in the header.
 
-**Sound** — EQ curve editor (drag points on the curve; graphic mode = 10 big
-vertical sliders), preset carousel, toggles for each DSP stage, driver-focus seat
-picker (a top-down car outline where you tap the seat), live spectrum behind the curve,
-A/B button, CPU load indicator.
-
-**Settings** — grouped list, large rows.
+**Settings** (1.2.0) — Appearance; Library & playback, backup, about. The bring-up tools (car test, device report,
+key tester, steering wheel) moved to the steering-wheel app (CR-05, CR-10).
 
 ### 5.3 Visual design tokens
 
@@ -491,14 +490,14 @@ live miniature of each; a second skin can follow the headlights (zlink `OUT_DARK
 
 | Skin | Type | Cover | Music bar | Backdrop |
 |---|---|---|---|---|
-| Midnight (default) | Manrope | Record sleeve with holographic foil; the disc slides out and spins while playing | Waveform dancing with the music | Glow tinted by the cover |
-| Neon Drive | Audiowide / Orbitron, caps | Neon tube frame pulsing on the beat | Glowing oscilloscope wave | Synthwave horizon grid, scrolling |
-| Amber Cockpit | Share Tech Mono, caps | Tachometer: progress arc, music-driven needle | LED segment meter with red zone | Carbon weave, amber sweep |
-| Vinyl Lounge | Playfair Display | Spinning record (33⅓ rpm), tonearm swings in/out | Groove line with stylus | Warm wood grain |
-| Aurora | Space Grotesk, very round | Liquid blob whose edge ripples with the spectrum, gooey colour blobs behind | Waveform | Moving northern lights |
-| Tape Deck | Space Grotesk / Manrope | Cassette: art as the label, tape winds reel to reel with the song, reels speed up as they empty | Waveform | 80s stripes, lower-right corner |
+| Midnight (default) | Manrope | Record sleeve with soft shadow, bevel, spine and holographic foil; the disc slides out and turns under a fixed reflection | Waveform dancing with the music | Glow tinted by the cover |
+| Neon City (id `neon`) | Tilt Neon / Audiowide | Rooftop LED billboard: pixel grid and refresh sweep, turned in 3D, lamp cones pulsing with the music, pink neon trim, scaffolding on a wet mirroring roof, light rain; neon record-and-note when there is no art; title and artist as neon signs | Glass tube filling with light | Night skyline with lit windows, wet-street reflection, edge signs that dip off rarely |
+| Sport Cockpit (id `amber`) | Share Tech Mono, caps | Rev counter: centre-pivot needle with inertia, ice-blue progress arc with red zone, digital time window | Ice-blue LED segments, red zone | Carbon weave, red under-light, ice scan line |
+| Vinyl Lounge | Playfair Display | Picture disc (art under the grooves, small red label); tonearm rests off the record, follows the song from edge to label, lifts on pause | Groove line with stylus | Felt under a breathing spotlight |
+| Aurora | Space Grotesk, very round | Liquid blob: bass pulses the shape, ripples run round the edge with the mids and highs | Wave that swells with the music | Moving northern lights |
+| Tape Deck | Space Grotesk / Manrope | Chrome cassette: smoky shell, art as the label, tape winds reel to reel | Deck transport panel: both reels behind smoky glass, tape over guide rollers past a chrome head and pinch roller, mechanical tape counter | Teal / sky / coral / white stripes, lower-right corner |
 | OLED Pure | Manrope ExtraBold, big type | Minimal square | Hairline with breathing playhead | Pure black (lightest on the CPU) |
-| Daylight | Manrope | Die-cut sticker: 3D tilt, foil sweep, corner that peels up on the beat | Waveform | Plain light |
+| Daylight | Manrope | Die-cut sticker: thick white border, soft contact shadow, 3D tilt, foil sweep, peeled corner | Waveform | Plain light |
 
 Every skin passes WCAG AAA (7:1) for primary text on background, surface and elevated surface, 4.5:1 for
 secondary text and on-accent (unit test `SkinContrastTest`). Fonts are bundled as static weight instances
@@ -841,6 +840,15 @@ library scan speed on the owner's USB stick.
 
 Needs the car: the HiCar hand-over on the real service, writing `/data/tw/music_name`, the microphone path on the unit
 (zlink uses one), model load time on the Cortex-A7.
+
+### Version 1.2.0 (2026-10-23)
+
+After the owner's first test of 1.1.0, every change is specified and tracked in [CHANGE_REQUESTS.md](CHANGE_REQUESTS.md):
+voice commands removed (CR-01); one Library section with tabs and search (CR-02); storage access asked on first start
+and a song always ready on Now Playing (CR-03); music-only folders built from the library (CR-04); Settings reduced to
+Appearance and Library & playback, the car tools moved to `feature/carlab` for the steering-wheel app (CR-05); sound
+profiles (CR-06); skin redesigns (CR-07); 30 generated placeholder covers (CR-08); clean-up and optimisation (CR-09).
+The 1.1.0 voice commands and steering-wheel takeover described above are no longer part of Cruise.
 
 ### After v1.0 (P2/P3 backlog)
 

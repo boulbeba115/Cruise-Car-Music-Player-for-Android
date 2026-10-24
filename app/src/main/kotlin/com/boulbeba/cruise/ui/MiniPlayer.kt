@@ -16,7 +16,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import android.os.SystemClock
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,14 +32,22 @@ import com.boulbeba.cruise.core.designsystem.icon.CruiseIcons
 import com.boulbeba.cruise.core.designsystem.theme.CruiseTheme
 import com.boulbeba.cruise.core.playback.PlayerConnection
 import com.boulbeba.cruise.core.playback.PlayerUiState
-import com.boulbeba.cruise.core.ui.GeneratedCover
+import com.boulbeba.cruise.core.ui.PlaceholderCover
 import com.boulbeba.cruise.feature.nowplaying.LocalCoverArt
+import kotlinx.coroutines.delay
 
 /** Bar shown under every screen except Now Playing (SPEC §5.2): what plays, with play/pause and next. */
 @Composable
 fun MiniPlayer(state: PlayerUiState, player: PlayerConnection, onOpen: () -> Unit, modifier: Modifier = Modifier) {
     val colors = CruiseTheme.colors
-    val progress = if (state.durationMs > 0) (state.positionMs.toFloat() / state.durationMs).coerceIn(0f, 1f) else 0f
+    // Its own once-a-second clock: only this bar redraws, not the screen above it.
+    val now by produceState(SystemClock.elapsedRealtime(), state.isPlaying) {
+        while (state.isPlaying) {
+            delay(1_000)
+            value = SystemClock.elapsedRealtime()
+        }
+    }
+    val progress = if (state.durationMs > 0) (state.positionAt(now).toFloat() / state.durationMs).coerceIn(0f, 1f) else 0f
     Column(
         modifier
             .fillMaxWidth()
@@ -52,7 +63,7 @@ fun MiniPlayer(state: PlayerUiState, player: PlayerConnection, onOpen: () -> Uni
             val art = LocalCoverArt.current?.image
             Box(Modifier.size(56.dp).clip(RoundedCornerShape(CruiseTheme.dimens.coverRadius * 0.4f))) {
                 if (art != null) Image(art, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-                else GeneratedCover(state.album.ifBlank { state.path ?: "" }, state.album.ifBlank { state.title })
+                else PlaceholderCover(state.path.orEmpty(), sizePx = 128)
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {

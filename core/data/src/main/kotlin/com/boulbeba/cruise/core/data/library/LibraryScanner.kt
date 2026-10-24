@@ -2,7 +2,7 @@ package com.boulbeba.cruise.core.data.library
 
 import android.os.Environment
 import android.os.SystemClock
-import com.boulbeba.cruise.core.car.CarLog
+import com.boulbeba.cruise.core.model.CruiseLog
 import com.boulbeba.cruise.core.data.artwork.ArtworkCache
 import com.boulbeba.cruise.core.data.db.LibraryDao
 import com.boulbeba.cruise.core.data.db.PlaylistEntity
@@ -53,7 +53,7 @@ class LibraryScanner @Inject constructor(
 
     fun scan() {
         if (job?.isActive == true) return
-        job = scope.launch { runCatching { scanNow() }.onFailure { CarLog.log("scan", "failed: $it") } }
+        job = scope.launch { runCatching { scanNow() }.onFailure { CruiseLog.log("scan", "failed: $it") } }
     }
 
     suspend fun scanNow() {
@@ -123,7 +123,7 @@ class LibraryScanner @Inject constructor(
         }
         importPlaylists(playlists)
         val elapsed = SystemClock.elapsedRealtime() - started
-        CarLog.log("scan", "done: $seen files, $read read, ${elapsed / 1000} s")
+        CruiseLog.log("scan", "done: $seen files, $read read, ${elapsed / 1000} s")
         _state.value = ScanState(running = false, filesSeen = seen, filesRead = read, message = "", lastScanMs = elapsed)
         artwork.prepareAlbumThumbnails()
     }

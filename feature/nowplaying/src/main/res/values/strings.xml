@@ -7,9 +7,6 @@
     <string name="np_previous">Previous track</string>
     <string name="np_shuffle">Shuffle</string>
     <string name="np_repeat">Repeat</string>
-    <string name="np_empty_title">Ready when you are</string>
-    <string name="np_empty_body">Pick a folder on your USB stick to start the music.</string>
-    <string name="np_open_folders">Open folders</string>
     <string name="np_favorite">Favourite</string>
     <string name="np_lyrics">Lyrics</string>
     <string name="np_queue_open">Queue</string>
@@ -29,5 +26,14 @@
     <string name="np_blind">Blind mode</string>
     <string name="np_blind_hint">Tap: play / pause · Swipe ← →: track · Swipe ↑ ↓: volume</string>
     <string name="np_blind_exit">Exit</string>
-    <string name="np_voice">Voice command</string>
+    <string name="np_access_title">Allow access to your music</string>
+    <string name="np_access_body">Cruise plays the music on this device, its SD card and USB sticks. It never changes or deletes your files.</string>
+    <string name="np_access_grant">Allow access</string>
+    <string name="np_looking_title">Finding your music</string>
+    <string name="np_looking_body">A song will be ready in a moment.</string>
+    <string name="np_looking_count">%1$d songs found so far…</string>
+    <string name="np_no_music_title">No music found yet</string>
+    <string name="np_no_music_body">Cruise plays music from the internal storage, SD cards and USB sticks. Add music to any of them and it starts here.</string>
+    <string name="np_queue_az">A–Z</string>
+    <string name="np_queue_play_order">Play order</string>
 </resources>

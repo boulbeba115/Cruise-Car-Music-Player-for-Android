@@ -1,13 +1,12 @@
 package com.boulbeba.cruise.ui
 
-import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -19,12 +18,15 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -36,49 +38,22 @@ import com.boulbeba.cruise.core.designsystem.skin.SkinBackground
 import com.boulbeba.cruise.core.designsystem.theme.CruiseTheme
 import com.boulbeba.cruise.core.ui.NavRequests
 import com.boulbeba.cruise.core.ui.PlayRequests
-import com.boulbeba.cruise.core.ui.VoiceRequests
-import com.boulbeba.cruise.feature.voice.VoiceOverlay
-import com.boulbeba.cruise.feature.voice.VoiceViewModel
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.boulbeba.cruise.feature.library.LibraryScreen
-import com.boulbeba.cruise.feature.library.PlaylistsScreen
-import com.boulbeba.cruise.feature.library.SearchScreen
 import com.boulbeba.cruise.feature.nowplaying.LocalCoverArt
 import com.boulbeba.cruise.feature.nowplaying.rememberArtwork
 import com.boulbeba.cruise.feature.sound.SoundScreen
 import com.boulbeba.cruise.core.playback.PlayerConnection
-import com.boulbeba.cruise.feature.folders.FoldersScreen
 import com.boulbeba.cruise.feature.nowplaying.NowPlayingScreen
-import com.boulbeba.cruise.feature.settings.diagnostics.DiagnosticsScreen
+import com.boulbeba.cruise.feature.settings.SettingsScreen
 
 @Composable
-fun CruiseApp(player: PlayerConnection) {
+fun CruiseApp(player: PlayerConnection, onStorageGranted: () -> Unit = {}) {
     var destination by rememberSaveable { mutableStateOf(TopDestination.NowPlaying) }
+    StoragePermissionEffect(onStorageGranted)
     val playback by player.state.collectAsStateWithLifecycle()
     // One decode of the current cover feeds the backdrop, Now Playing and the mini player.
     val art = rememberArtwork(playback.artwork, playback.artworkKey, playback.path, with(LocalDensity.current) { 480.dp.roundToPx() })
 
-    // Voice: the overlay sits above every screen; requests come from the wheel, mic buttons and other apps.
-    val voice: VoiceViewModel = hiltViewModel()
-    val voiceUi by voice.ui.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    val micPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) voice.toggle()
-    }
-    val listen = {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) voice.toggle()
-        else micPermission.launch(Manifest.permission.RECORD_AUDIO)
-    }
-    val listenCount by VoiceRequests.listen.collectAsStateWithLifecycle()
-    LaunchedEffect(listenCount) { if (listenCount > 0) listen() }
-    LaunchedEffect(Unit) {
-        VoiceRequests.query.collect { q -> if (q != null) { VoiceRequests.query.value = null; voice.run(q) } }
-    }
     // An audio file opened from a file manager: play it as soon as the player is connected.
     val pendingFile by PlayRequests.path.collectAsStateWithLifecycle()
     LaunchedEffect(pendingFile, playback.connected) {
@@ -90,14 +65,14 @@ fun CruiseApp(player: PlayerConnection) {
     }
 
     // "Go to folder / album" from any screen switches destination; the target screen consumes the request.
-    LaunchedEffect(Unit) { NavRequests.folder.collect { if (it != null) destination = TopDestination.Folders } }
+    LaunchedEffect(Unit) { NavRequests.folder.collect { if (it != null) destination = TopDestination.Library } }
     LaunchedEffect(Unit) { NavRequests.album.collect { if (it != null) destination = TopDestination.Library } }
     val items = TopDestination.entries.map { NavItem(it.name, it.icon, stringResource(it.label)) }
     val onSelect: (NavItem) -> Unit = { destination = TopDestination.valueOf(it.key) }
 
     val content: @Composable (Modifier) -> Unit = { modifier ->
         Column(modifier) {
-            DestinationContent(destination, onNavigate = { destination = it }, modifier = Modifier.weight(1f))
+            DestinationContent(destination, modifier = Modifier.weight(1f))
             AnimatedVisibility(
                 visible = playback.hasMedia && destination != TopDestination.NowPlaying,
                 enter = slideInVertically { it } + fadeIn(),
@@ -131,29 +106,29 @@ fun CruiseApp(player: PlayerConnection) {
             }
         }
     }
-    VoiceOverlay(voiceUi, onCancel = voice::cancel, onRetry = { voice.cancel(); listen() })
+    AccessBanner(Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing))
     }
     }
 }
 
+/**
+ * The current destination. Switching shows the new screen straight away and fades it in; the old one is disposed at
+ * once instead of staying composed through a cross-transition, which halves the work of a switch on the unit (CR-09).
+ */
 @Composable
-private fun DestinationContent(destination: TopDestination, onNavigate: (TopDestination) -> Unit, modifier: Modifier = Modifier) {
-    AnimatedContent(
-        targetState = destination,
-        transitionSpec = {
-            (fadeIn(tween(220)) + slideInVertically(tween(280)) { it / 24 }) togetherWith fadeOut(tween(120))
-        },
-        label = "destination",
-        modifier = modifier.fillMaxSize(),
-    ) { current ->
-        when (current) {
-            TopDestination.NowPlaying -> NowPlayingScreen(onOpenFolders = { onNavigate(TopDestination.Folders) })
-            TopDestination.Library -> LibraryScreen()
-            TopDestination.Folders -> FoldersScreen()
-            TopDestination.Playlists -> PlaylistsScreen()
-            TopDestination.Search -> SearchScreen(onOpenLibrary = { onNavigate(TopDestination.Library) })
-            TopDestination.Sound -> SoundScreen()
-            TopDestination.Settings -> DiagnosticsScreen()
+private fun DestinationContent(destination: TopDestination, modifier: Modifier = Modifier) {
+    Box(modifier.fillMaxSize()) {
+        key(destination) {
+            val shown = remember { Animatable(0f) }
+            LaunchedEffect(Unit) { shown.animateTo(1f, tween(200)) }
+            Box(Modifier.fillMaxSize().graphicsLayer { alpha = shown.value; translationY = (1f - shown.value) * 16.dp.toPx() }) {
+                when (destination) {
+                    TopDestination.NowPlaying -> NowPlayingScreen()
+                    TopDestination.Library -> LibraryScreen()
+                    TopDestination.Sound -> SoundScreen()
+                    TopDestination.Settings -> SettingsScreen()
+                }
+            }
         }
     }
 }

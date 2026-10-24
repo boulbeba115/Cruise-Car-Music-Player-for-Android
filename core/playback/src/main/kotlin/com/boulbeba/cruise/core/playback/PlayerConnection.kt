@@ -167,9 +167,6 @@ class PlayerConnection @Inject constructor(@ApplicationContext private val conte
 
     fun next() { controller?.seekToNext() }
 
-    /** Player volume 0…1 (not the system volume): used to duck the music while listening to a voice command. */
-    fun setPlayerVolume(volume: Float) { controller?.volume = volume.coerceIn(0f, 1f) }
-
     fun previous() { controller?.seekToPrevious() }
 
     fun seekTo(positionMs: Long) {
@@ -232,12 +229,16 @@ class PlayerConnection @Inject constructor(@ApplicationContext private val conte
         }
         ticker?.cancel()
         if (c.isPlaying) {
+            // Screens extrapolate the position from positionSampledAt (PlayerUiState.positionAt), so a resync every few
+            // seconds is enough; a faster tick would recompose every screen that watches the player (CR-09).
             ticker = scope.launch {
                 while (isActive) {
-                    delay(500)
+                    delay(POSITION_RESYNC_MS)
                     _state.update { it.copy(positionMs = c.currentPosition.coerceAtLeast(0), positionSampledAt = android.os.SystemClock.elapsedRealtime()) }
                 }
             }
         }
     }
 }
+
+private const val POSITION_RESYNC_MS = 5_000L

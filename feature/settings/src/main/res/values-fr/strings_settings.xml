@@ -7,7 +7,7 @@
     <string name="settings_scan_progress">Lecture de %1$d fichiers sur %2$d…</string>
     <string name="settings_rescan">Réanalyser</string>
     <string name="settings_auto_scan">Analyse automatique</string>
-    <string name="settings_auto_scan_hint">Au démarrage de Cruise et à l\'insertion d\'une clé USB</string>
+    <string name="settings_auto_scan_hint">Au démarrage de Cruise et à l\'insertion d\'une clé USB ou d\'une carte SD</string>
     <string name="settings_min_duration">Ignorer les fichiers courts</string>
     <string name="settings_min_duration_hint">Les fichiers plus courts (jingles, sons de notification) restent hors de la bibliothèque</string>
     <string name="settings_playback">Lecture</string>
@@ -43,4 +43,8 @@
     <string name="appearance_perf_saver">Économie</string>
     <string name="settings_gestures">Gestes sur la lecture en cours</string>
     <string name="settings_gestures_hint">Maintenir : lecture / pause · maintenir et glisser : avancer · glisser gauche / droite : piste · glisser haut / bas : volume</string>
+    <string name="settings_title">Réglages</string>
+    <string name="settings_about">À propos</string>
+    <string name="settings_version">Cruise %1$s</string>
+    <string name="settings_about_body">Lecteur de musique hors ligne pour la voiture. La musique du stockage interne, des cartes SD et des clés USB ; sans compte ni internet.</string>
 </resources>

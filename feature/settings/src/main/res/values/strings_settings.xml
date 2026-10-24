@@ -7,7 +7,7 @@
     <string name="settings_scan_progress">Reading %1$d of %2$d files…</string>
     <string name="settings_rescan">Rescan</string>
     <string name="settings_auto_scan">Scan automatically</string>
-    <string name="settings_auto_scan_hint">When Cruise starts and when a USB stick is plugged in</string>
+    <string name="settings_auto_scan_hint">When Cruise starts and when a USB stick or SD card is plugged in</string>
     <string name="settings_min_duration">Ignore short files</string>
     <string name="settings_min_duration_hint">Shorter files (jingles, notification sounds) stay out of the library</string>
     <string name="settings_playback">Playback</string>
@@ -43,4 +43,8 @@
     <string name="appearance_perf_saver">Saver</string>
     <string name="settings_gestures">Gestures on Now Playing</string>
     <string name="settings_gestures_hint">Hold anywhere: play / pause · hold and slide: scrub · swipe left / right: track · swipe up / down: volume</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Cruise %1$s</string>
+    <string name="settings_about_body">Offline music player for the car. Music from the internal storage, SD cards and USB sticks; no account, no internet.</string>
 </resources>
