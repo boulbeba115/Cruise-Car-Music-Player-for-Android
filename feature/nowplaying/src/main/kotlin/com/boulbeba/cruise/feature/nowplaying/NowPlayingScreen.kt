@@ -232,12 +232,9 @@ private fun TrackPanel(
         val title = track?.title?.takeIf { it.isNotBlank() } ?: state.title
         val artist = track?.artist?.takeIf { it.isNotBlank() } ?: state.artist
         if (skin.neonSigns) {
-            // Neon City (CHANGE_REQUESTS.md CR-07.4): title and artist are lit signs that flicker on with each track.
-            val lit by rememberNeonFlicker(title)
-            NeonSignText(skinTitle(title), accent2, type.display, lit, maxLines = 2)
+            // Neon City (CHANGE_REQUESTS.md CR-15): title and artist ride on a banner towed by a neon plane.
+            NeonBannerPlane(skinTitle(title), artist, pink = accent2, cyan = accent, playing = state.isPlaying)
             Spacer(Modifier.height(4.dp))
-            if (artist.isNotBlank()) NeonSignText(artist, accent, type.subtitle, lit)
-            Spacer(Modifier.height(8.dp))
         } else {
             AnimatedContent(title, transitionSpec = { (fadeIn(tween(300)) + slideInHorizontally { it / 10 }) togetherWith fadeOut(tween(150)) }, label = "title") { t ->
                 Text(

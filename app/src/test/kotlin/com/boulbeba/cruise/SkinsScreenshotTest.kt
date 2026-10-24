@@ -98,12 +98,12 @@ class SkinsScreenshotTest {
         return ByteArrayOutputStream().also { bmp.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()
     }
 
-    private fun play(withArt: Boolean = true) {
+    private fun play(withArt: Boolean = true, title: String = "Nightcall", artist: String = "Kavinsky") {
         val path = "/storage/usbdisk0/Music/Kavinsky/OutRun/03 - Nightcall.flac"
         compose.activity.player.preview(
             PlayerUiState(
                 connected = true, hasMedia = true, path = path, libraryPath = path,
-                title = "Nightcall", artist = "Kavinsky", album = "OutRun", artwork = if (withArt) cover() else null, artworkKey = if (withArt) "nightcall" else null,
+                title = title, artist = artist, album = "OutRun", artwork = if (withArt) cover() else null, artworkKey = if (withArt) "nightcall" else null,
                 isPlaying = true, positionMs = 95_000, positionSampledAt = SystemClock.elapsedRealtime(), durationMs = 258_000,
                 queueIndex = 2, queueSize = 12,
             ),
@@ -146,6 +146,24 @@ class SkinsScreenshotTest {
     @Test fun skin_midnight_no_art() = noArt("midnight")
     @Test fun skin_vinyl_no_art() = noArt("vinyl")
     @Test fun skin_tape_no_art() = noArt("tape")
+
+    /** Neon City's towed banner with a name too long for it: the line scrolls, faded at the banner's ends (CR-15). */
+    @Test fun skin_neon_long_title() {
+        Appearance.setSkin("neon")
+        play(title = "The Less I Know The Better (Extended Midnight Drive Remix)", artist = "فيروز وزياد الرحباني")
+        settle(6_000)
+        capture("20_skin_neon_long_title")
+    }
+
+    /** Switching between two skins that both have a texture must swap the texture (owner's bug 2026-10-24: Daylight kept Sport Cockpit's carbon). */
+    @Test fun skin_switch_amber_to_daylight() {
+        Appearance.setSkin("amber")
+        play()
+        settle(2_500)
+        Appearance.setSkin("daylight")
+        settle(2_500)
+        capture("20_skin_switch_amber_to_daylight")
+    }
 
     @Test fun settings_appearance() {
         clickText("Settings")

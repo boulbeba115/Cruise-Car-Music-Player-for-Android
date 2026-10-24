@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/assets/icon.png" alt="Cruise logo: a little car wearing headphones" width="128">
+
 # Cruise
 
 **An offline music player built for the car, not for the phone.**
@@ -60,7 +62,8 @@ Developed and tested on a Renault Mégane III with an aftermarket "TS7" Android 
 - **Accent-insensitive search** across folders, albums, artists and tracks — "ete" finds "Été", "cafe" finds "Café".
 - Playlists: create, reorder, save the queue as a playlist, export to `.m3u8` on the stick; **Favourites, Most played
   and Recently added** fill themselves.
-- Songs without art get one of **30 generated covers**, chosen by folder, so an album always looks the same.
+- Songs without art get an **illustrated cover from the active skin's own set** (158 in all, generated offline), a
+  different one per song.
 
 ### Sound engine
 - **Profile cards** — Natural, Mégane tuned, Bass boost, Vocal clarity, Highway, Night, Rock, Pop, Electronic, Jazz,
@@ -93,16 +96,27 @@ contrast for primary text.
 | | | |
 |:---:|:---:|:---:|
 | <img src="docs/images/skin-midnight.jpg" width="280"><br>**Midnight** — record sleeve, the disc slides out and spins | <img src="docs/images/skin-tape.jpg" width="280"><br>**Tape Deck** — chrome cassette, deck transport with a tape counter | <img src="docs/images/skin-aurora.jpg" width="280"><br>**Aurora** — a liquid cover that moves with the music |
-| <img src="docs/images/skin-daylight.jpg" width="280"><br>**Daylight** — die-cut sticker with a peel corner | <img src="docs/images/skin-neon.jpg" width="280"><br>**Neon City** — LED billboard on a rooftop, your song on neon signs | <img src="docs/images/skin-amber.jpg" width="280"><br>**Sport Cockpit** — rev counter cover, LED meter |
+| <img src="docs/images/skin-daylight.jpg" width="280"><br>**Daylight** — die-cut sticker with a peel corner | <img src="docs/images/skin-neon.jpg" width="280"><br>**Neon City** — LED billboard on a rooftop, your song on a banner towed by a neon plane | <img src="docs/images/skin-amber.jpg" width="280"><br>**Sport Cockpit** — rev counter cover, LED meter |
 | <img src="docs/images/skin-vinyl.jpg" width="280"><br>**Vinyl Lounge** — picture disc, tonearm that follows the song | <img src="docs/images/skin-oled.jpg" width="280"><br>**OLED Pure** — true black, lightest on the CPU | <img src="docs/images/settings-appearance.jpg" width="280"><br>Live previews in Settings |
 
 ## Screenshots
 
-| Library | Synced lyrics | Sound |
+| Library: folders with music only | Library: albums | Sound profiles |
 |:---:|:---:|:---:|
-| <img src="docs/images/library.jpg" width="280"> | <img src="docs/images/lyrics.jpg" width="280"> | <img src="docs/images/sound.jpg" width="280"> |
-| **Search** | **Queue** | **Phone, portrait** |
-| <img src="docs/images/search.jpg" width="280"> | <img src="docs/images/queue.jpg" width="280"> | <img src="docs/images/phone-portrait.jpg" width="200"> |
+| <img src="docs/images/library.jpg" width="280"> | <img src="docs/images/library-albums.jpg" width="280"> | <img src="docs/images/sound.jpg" width="280"> |
+| **Search inside the Library** | **Fast scroller with a letter bubble** | **Queue** |
+| <img src="docs/images/search.jpg" width="280"> | <img src="docs/images/fast-scroller.jpg" width="280"> | <img src="docs/images/queue.jpg" width="280"> |
+| **Blind mode: whole-screen gestures** | **Long names scroll along the banner** | **Phone, portrait** |
+| <img src="docs/images/blind-mode.jpg" width="280"> | <img src="docs/images/neon-long-title.jpg" width="280"> | <img src="docs/images/phone-portrait.jpg" width="200"> |
+
+### Songs without a cover
+
+Each skin brings its own set of about twenty illustrated covers in its style, generated offline. Every song without art
+gets one of them, a different one per song, and it stays the same for that song.
+
+| Neon City | Vinyl Lounge | Tape Deck |
+|:---:|:---:|:---:|
+| <img src="docs/images/no-art-neon.jpg" width="280"> | <img src="docs/images/no-art-vinyl.jpg" width="280"> | <img src="docs/images/no-art-tape.jpg" width="280"> |
 
 ## Install
 

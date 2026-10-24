@@ -2,8 +2,7 @@ package com.boulbeba.cruise.core.designsystem.skin
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import com.boulbeba.cruise.core.designsystem.R
 import kotlinx.coroutines.Dispatchers
@@ -362,13 +361,15 @@ private val textures = object : android.util.LruCache<Int, ImageBitmap>(2) {}
 private fun rememberSkinTexture(skinId: String): ImageBitmap? {
     val context = LocalContext.current
     val res = textureFor(skinId) ?: return null
-    val image by produceState(textures.get(res), res) {
-        if (value == null) value = withContext(Dispatchers.IO) {
+    // State per texture: switching between two textured skins must not keep the previous skin's bitmap.
+    val image = remember(res) { mutableStateOf(textures.get(res)) }
+    LaunchedEffect(res) {
+        if (image.value == null) image.value = withContext(Dispatchers.IO) {
             val options = BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.RGB_565; inScaled = false }
             BitmapFactory.decodeResource(context.resources, res, options)?.asImageBitmap()?.also { textures.put(res, it) }
         }
     }
-    return image
+    return image.value
 }
 
 /** [image] scaled to cover the whole area, centred. */

@@ -31,8 +31,10 @@ Status legend: ✅ done and verified on the PC (build, unit tests, screenshot te
 | [CR-10](#cr-10--second-app-steering-wheel-control-and-car-integration-probe) | Second app: steering-wheel control + car-integration probe and report | P2 | 🟡 Built · 🚗 needs the car |
 | [CR-11](#cr-11--music-from-every-storage-not-only-the-usb-stick) | Music from every storage (internal, SD card, USB), not only the USB stick | P0 | ✅ Done · 👀 owner review |
 | [CR-12](#cr-12--storage-access-asked-at-start-player-shown-at-once) | Storage access asked at start, the player shown at once with a banner instead of a blocking screen | P0 | ✅ Done · 👀 owner review |
-| [CR-13](#cr-13--illustrated-covers-per-skin-and-texture-backgrounds) | Illustrated placeholder covers per skin (not abstract), a different one per song; texture backgrounds | P1 | 🟡 In progress (images generating) |
+| [CR-13](#cr-13--illustrated-covers-per-skin-and-texture-backgrounds) | Illustrated placeholder covers per skin (not abstract), a different one per song; texture backgrounds | P1 | ✅ Done · 👀 owner review |
 | [CR-14](#cr-14--fast-scroller-with-letter-bubble-on-long-lists) | Fast scroller with a letter bubble on long lists; A–Z view of the queue | P1 | ✅ Done · 👀 owner review |
+| [CR-15](#cr-15--neon-city-title-and-artist-on-a-banner-towed-by-a-neon-plane) | Neon City: title and artist on a banner towed by a neon plane, animated | P1 | ✅ Done · 👀 owner review |
+| [CR-16](#cr-16--app-icon-car-mascot-with-headphones) | App icon: the car mascot with headphones picked from the logo attempts | P1 | ✅ Done · 👀 owner review |
 
 ---
 
@@ -368,12 +370,14 @@ says so when the request is refused.
 
 ## CR-13 — Illustrated covers per skin, and texture backgrounds
 
-**Status: 🟡 In progress** — code done: covers are chosen **per song** (no more "every song in a folder gets the same
+**Status: ✅ Done · 👀 owner review** — covers are chosen **per song** (no more "every song in a folder gets the same
 cover") from **the active skin's own set**, found by file name (`cover_<skin>_<nn>`); texture backgrounds for Vinyl
 Lounge (walnut and felt), Sport Cockpit (carbon), Tape Deck (brushed metal) and Daylight (paper) installed and drawn
 under each skin's lighting. Vinyl Lounge: the first texture (walnut and green felt) was rejected by the owner and replaced
-by a navy art-deco wallpaper with fine gold fan lines (picked from six new candidates). Images: 160 illustrations (20 per skin, scenes in each skin's style, nothing abstract)
-generating in the owner's ComfyUI; the 30 abstract covers of CR-08 are replaced when they are in.
+by a navy art-deco wallpaper with fine gold fan lines (picked from six new candidates). Sport Cockpit: the first carbon weave (large, contrasty checks) was rejected too and replaced by
+a fine, dark carbon weave with a soft red glow from below (picked from eight candidates rendered in the skin). Images: 158 illustrations installed (20 per skin generated, scenes in each skin's style,
+nothing abstract; two Sport Cockpit ones left out), 512 px WebP, about 2.5 MB in all; they replace the 30 abstract covers
+of CR-08. Prompts and file list in `docs/assets/placeholder-covers.md`.
 
 **Why.** Owner's test 2026-10-24: one cover for every song; abstract covers too generic; wanted scenes like a cat listening
 to records, many of them, matched to each skin; textured backgrounds such as Vinyl Lounge's.
@@ -390,6 +394,40 @@ Screenshot test 35.
 
 **Why.** Owner's request 2026-10-24, with a reference screenshot: long lists such as a 70-song queue were hard to move
 through.
+
+## CR-15 — Neon City: title and artist on a banner towed by a neon plane
+
+**Status: ✅ Done · 👀 owner review** — on Neon City the title and artist are no longer loose text: a small prop plane,
+drawn in cyan neon tubes with a pink stripe, tows an advertising banner across the sky beside the billboard, the title
+in pink tubes and the artist in cyan.
+- **New track:** the plane flies off to the left and fades; the next one comes in from the right and slows to a cruise.
+  The banner's tubes then light up from the leading edge to the free end and blink once (a single flash per track,
+  SPEC §5.4).
+- **While playing:** the cloth flutters (a wave running to its free end, with light and shade on the folds), the plane
+  bobs and pitches gently, its propeller turns and the red light on its fin breathes. Paused, it all holds still; on
+  the Saver quality it does not move at all.
+- **Long names** scroll along the banner, faded at its ends (right to left for Latin text, left to right for Arabic).
+- **Cost on the unit:** each line is drawn once per track, glow included, into a bitmap. Each frame only slices it into
+  narrow strips shifted by the wave, so there is no text layout and no blur per frame.
+
+Screenshot tests `20_skin_neon` and `20_skin_neon_long_title`. (Arabic shows reversed in the JVM screenshots — a limit of
+the test renderer that plain text shares; devices shape it properly.)
+
+**Why.** Owner's idea 2026-10-24: keep the billboard, and make the title and singer blend into the theme — "a neon plane
+hanging an ads sign in the back … with cool animation".
+
+## CR-16 — App icon: car mascot with headphones
+
+**Status: ✅ Done · 👀 owner review** — ten logo concepts were drawn by two local models (Z-Image Turbo and Krea-2 Turbo,
+same prompts and seeds) and put side by side; the owner picked Krea-2's car mascot. It is now the launcher icon:
+- **Android 8 and later (adaptive icon):** the mascot, cut out along its white sticker outline, sits inside the 66 dp
+  safe zone over a gradient of the logo's own orange, so round, squircle and square launcher masks never clip it.
+- **Android 6–7:** the original rounded tile as PNG icons from mdpi to xxxhdpi.
+- `docs/assets/icon.png` (512 px) for the README.
+
+The Cruise Wheel app keeps its own icon.
+
+**Why.** Owner's request 2026-10-24: a logo attempt through both models on one sheet to pick from.
 
 ## Execution plan
 
