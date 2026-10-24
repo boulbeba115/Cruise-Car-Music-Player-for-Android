@@ -126,6 +126,19 @@ class SkinsScreenshotTest {
 
     @Test fun skin_midnight() = skin("midnight")
     @Test fun skin_neon() = skin("neon")
+
+    /** Neon City's fog drifting (CR-22): three moments 20 s apart, to compare by eye. */
+    @Test fun skin_neon_fog_motion() {
+        Appearance.setSkin("neon")
+        play()
+        // The fog textures are built off the main thread; give them a moment of real time.
+        Thread.sleep(2_000)
+        settle(2_500)
+        for (s in 0..2) {
+            capture("21_neon_fog_${s * 20}s")
+            settle(20_000)
+        }
+    }
     @Test fun skin_amber() = skin("amber")
     @Test fun skin_vinyl() = skin("vinyl")
     @Test fun skin_aurora() = skin("aurora")

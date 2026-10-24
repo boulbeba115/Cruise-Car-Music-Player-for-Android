@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -31,7 +32,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -85,6 +86,7 @@ fun SkinBackground(modifier: Modifier = Modifier, coverAccent: Color? = null, co
     val deep = if (skin.dynamicAccent && coverDeep != null) coverDeep else colors.accent2
     val style = skin.background
     val texture = rememberSkinTexture(skin.id)
+    if (style == BackgroundStyle.NeonCity) LaunchedEffect(Unit) { withContext(Dispatchers.Default) { NeonFog.prepare() } }
     Spacer(
         modifier.drawWithCache {
             // With its painted backdrop (CR-22) Neon City only adds the moving lights; the drawn city is the fallback.
@@ -317,19 +319,21 @@ private fun DrawScope.neonNight(t: Float, image: ImageBitmap) {
         drawCircle(Brush.radialGradient(listOf(beam.copy(alpha = 0.22f), Color.Transparent), center = p, radius = r), r, p)
     }
 
-    // The holographic column: a band of light gliding up it every few seconds, and a slow shimmer.
-    val colTop = at(0.627f, 0.14f)
-    val colBottom = at(0.700f, 0.575f)
-    val holo = Color(0xFFBDF4F6)
-    clipRect(colTop.x, colTop.y, colBottom.x, colBottom.y) {
-        val h = colBottom.y - colTop.y
-        drawRect(holo.copy(alpha = 0.035f + 0.03f * sin(t * 0.8f)), colTop, Size(colBottom.x - colTop.x, h))
-        val y = colBottom.y - ((t * 0.16f) % 1.2f) * h
-        val band = h * 0.07f
-        drawRect(
-            Brush.verticalGradient(listOf(Color.Transparent, holo.copy(alpha = 0.22f), Color.Transparent), startY = y - band, endY = y + band),
-            Offset(colTop.x, y - band), Size(colBottom.x - colTop.x, band * 2),
-        )
+    // The holographic column: a soft lens of light gliding up it every few seconds, kept inside the painted tower — its
+    // lit body measured on the picture, with the rounded top of its cylinder — so nothing shows beyond it.
+    val colTop = at(0.630f, 0.17f)
+    val colBottom = at(0.694f, 0.53f)
+    val colW = colBottom.x - colTop.x
+    val colH = colBottom.y - colTop.y
+    val column = Path().apply {
+        addRoundRect(RoundRect(colTop.x, colTop.y, colBottom.x, colBottom.y, CornerRadius(colW / 2, colW * 0.35f)))
+    }
+    clipPath(column) {
+        val y = colBottom.y - ((t * 0.14f) % 1.25f) * colH
+        val lens = Offset(colTop.x + colW / 2, y)
+        scale(1f, 0.55f, pivot = lens) {
+            drawCircle(Brush.radialGradient(listOf(Color(0xFFBDF4F6).copy(alpha = 0.26f), Color.Transparent), center = lens, radius = colW * 0.75f), colW * 0.75f, lens)
+        }
     }
 
     // Aviation lights on the antennas, breathing out of step.
@@ -341,60 +345,98 @@ private fun DrawScope.neonNight(t: Float, image: ImageBitmap) {
         drawCircle(Color(0xFFFF7070).copy(alpha = 0.35f + 0.6f * glow), size.minDimension * 0.0028f, p)
     }
 
-    // Fog: two layers of the same soft fog texture drifting at different heights and speeds, wrapping round.
-    val fogTex = neonFogTexture
-    for ((i, layer) in NEON_FOG_LAYERS.withIndex()) {
+    // Fog: three layers drifting one way at different depths, each breathing slowly in density (see NeonFog).
+    val fog = NeonFog.textures ?: return
+    for (layer in NeonFog.layers) {
         val w = (size.width * layer.width).roundToInt()
         val h = (size.height * layer.height).roundToInt()
         val y = (size.height * layer.top).roundToInt()
-        val x = -((t * layer.speed + i * 400f) % w).roundToInt()
+        val x = -((t * size.width * layer.speed + layer.phase * w) % w).roundToInt()
+        val breathe = 0.72f + 0.28f * sin(t * 2f * Math.PI.toFloat() / layer.breathS + layer.phase * 6f)
+        val tex = fog[layer.texture]
         for (k in 0..1) {
-            drawImage(fogTex, srcOffset = IntOffset.Zero, srcSize = IntSize(fogTex.width, fogTex.height), dstOffset = IntOffset(x + k * w, y), dstSize = IntSize(w, h), alpha = layer.alpha)
+            drawImage(tex, srcOffset = IntOffset.Zero, srcSize = IntSize(tex.width, tex.height), dstOffset = IntOffset(x + k * w, y), dstSize = IntSize(w, h), alpha = layer.alpha * breathe)
         }
     }
 }
 
-private class FogLayer(val top: Float, val height: Float, val width: Float, val speed: Float, val alpha: Float)
-
-/** Lower, wider and slower behind; higher, narrower and faster in front: the fog reads as depth. */
-private val NEON_FOG_LAYERS = listOf(
-    FogLayer(top = 0.38f, height = 0.5f, width = 1.7f, speed = 9f, alpha = 0.75f),
-    FogLayer(top = 0.58f, height = 0.45f, width = 1.25f, speed = 19f, alpha = 0.55f),
-)
-
 /**
- * Fog texture, made once: fractal value noise that repeats across its width (so it can scroll forever), thinning out
- * at the top and the bottom, in the city's fog colour. Small; drawn stretched, its smoothness hides the scale.
+ * Neon City's fog (CR-22, owner: "moving slowly like a real fog, not a clear loop"). Two fog textures are made once, in
+ * the background: fractal value noise warped through itself, so it forms wisps and curls rather than blobs, repeating
+ * seamlessly across its width, thick low down and thinning upwards. Three layers drift one way only — far haze barely
+ * moving, nearer wisps a little faster — each at its own size, so together they never show a repeat, and each slowly
+ * thickens and thins over about a minute like a fog bank.
  */
-private val neonFogTexture: ImageBitmap by lazy {
-    val w = 384
-    val h = 96
-    val rnd = Random(7)
-    val octaves = listOf(4 to 0.55f, 8 to 0.28f, 16 to 0.17f)
-    val grids = octaves.map { (cells, _) -> Array(cells / 4 + 2) { FloatArray(cells) { rnd.nextFloat() } } }
-    fun smooth(x: Float) = x * x * (3f - 2f * x)
-    val px = IntArray(w * h)
-    for (y in 0 until h) for (x in 0 until w) {
-        var v = 0f
-        octaves.forEachIndexed { i, (cells, amp) ->
-            val g = grids[i]
-            val rows = g.size - 1
-            val fx = x.toFloat() / w * cells
-            val fy = y.toFloat() / h * (rows - 1)
+internal object NeonFog {
+    class Layer(val texture: Int, val top: Float, val height: Float, val width: Float, val speed: Float, val alpha: Float, val breathS: Float, val phase: Float)
+
+    /** Speeds are fractions of the screen width per second. */
+    val layers = listOf(
+        Layer(texture = 0, top = 0.30f, height = 0.50f, width = 2.3f, speed = 0.0045f, alpha = 0.6f, breathS = 47f, phase = 0.0f),
+        Layer(texture = 1, top = 0.45f, height = 0.50f, width = 1.9f, speed = 0.0085f, alpha = 0.48f, breathS = 61f, phase = 0.37f),
+        Layer(texture = 0, top = 0.62f, height = 0.48f, width = 1.45f, speed = 0.014f, alpha = 0.38f, breathS = 73f, phase = 0.71f),
+    )
+
+    // Snapshot state: the backdrop redraws by itself once the textures are ready, even with the music paused.
+    private val ready = mutableStateOf<List<ImageBitmap>?>(null)
+    val textures: List<ImageBitmap>? get() = ready.value
+
+    /** Builds the textures off the main thread; until then the city simply has no moving fog. */
+    fun prepare() {
+        if (ready.value != null) return
+        ready.value = listOf(make(7L), make(31L))
+    }
+
+    private class Noise(seed: Long, val cells: Int, val rows: Int) {
+        private val grid = Random(seed).let { r -> Array(rows + 1) { FloatArray(cells) { r.nextFloat() } } }
+
+        /** [u] wraps round (0..1 is one period); [v] runs 0..1 over the rows. */
+        fun at(u: Float, v: Float): Float {
+            val fx = ((u % 1f + 1f) % 1f) * cells
+            val fy = v.coerceIn(0f, 0.9999f) * rows
             val x0 = fx.toInt() % cells
             val x1 = (x0 + 1) % cells
             val y0 = fy.toInt()
             val tx = smooth(fx - fx.toInt())
             val ty = smooth(fy - y0)
-            val top = g[y0][x0] + (g[y0][x1] - g[y0][x0]) * tx
-            val bottom = g[y0 + 1][x0] + (g[y0 + 1][x1] - g[y0 + 1][x0]) * tx
-            v += amp * (top + (bottom - top) * ty)
+            val a = grid[y0][x0] + (grid[y0][x1] - grid[y0][x0]) * tx
+            val b = grid[y0 + 1][x0] + (grid[y0 + 1][x1] - grid[y0 + 1][x0]) * tx
+            return a + (b - a) * ty
         }
-        val envelope = sin(Math.PI.toFloat() * y / (h - 1))
-        val a = (((v - 0.32f) / 0.68f).coerceIn(0f, 1f)).let { it * it } * envelope
-        px[y * w + x] = android.graphics.Color.argb((a * 190).roundToInt(), 0x4C, 0x7A, 0x86)
+
+        private fun smooth(x: Float) = x * x * (3f - 2f * x)
     }
-    Bitmap.createBitmap(px, w, h, Bitmap.Config.ARGB_8888).asImageBitmap()
+
+    private fun make(seed: Long): ImageBitmap {
+        val w = 512
+        val h = 128
+        fun fbm(seedOffset: Long): (Float, Float) -> Float {
+            val octaves = listOf(Noise(seed + seedOffset, 5, 2) to 0.5f, Noise(seed + seedOffset + 1, 10, 4) to 0.27f, Noise(seed + seedOffset + 2, 20, 8) to 0.15f, Noise(seed + seedOffset + 3, 40, 16) to 0.08f)
+            return { u, v -> octaves.sumOf { (n, a) -> (n.at(u, v) * a).toDouble() }.toFloat() }
+        }
+        val shape = fbm(0)
+        val warpX = fbm(100)
+        val warpY = fbm(200)
+        fun smoothstep(e0: Float, e1: Float, x: Float): Float {
+            val t = ((x - e0) / (e1 - e0)).coerceIn(0f, 1f)
+            return t * t * (3f - 2f * t)
+        }
+        val px = IntArray(w * h)
+        for (y in 0 until h) {
+            val v = y.toFloat() / (h - 1)
+            // Thick low down, thinning upwards, soft at the very bottom so layers overlap without a seam.
+            val envelope = smoothstep(0f, 0.45f, v) * (1f - smoothstep(0.82f, 1f, v))
+            for (x in 0 until w) {
+                val u = x.toFloat() / w
+                val du = (warpX(u, v) - 0.5f) * 0.09f
+                val dv = (warpY(u, v) - 0.5f) * 0.35f
+                val n = shape(u + du, v + dv)
+                val a = smoothstep(0.30f, 0.78f, n) * envelope
+                px[y * w + x] = android.graphics.Color.argb((a * 235).roundToInt(), 0x7F, 0xA7, 0xB0)
+            }
+        }
+        return Bitmap.createBitmap(px, w, h, Bitmap.Config.ARGB_8888).asImageBitmap()
+    }
 }
 
 /** Searchlights on the painted tower tops, as fractions of the backdrop picture (bg_neon, measured from it). */

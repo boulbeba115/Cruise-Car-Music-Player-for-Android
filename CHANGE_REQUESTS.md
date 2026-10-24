@@ -552,8 +552,13 @@ phone's screen went off.
 - Owner's review on the emulator: the banner was still too bright and its black cloth did not fit; more fog wanted.
   - Banner: thin see-through cloth lit from below by the city (the holographic column shows through), quieter
     lettering, a faint edge instead of an outline.
-  - Fog: a fog texture made once (fractal value noise repeating across its width) drifting in two layers at different
-    heights and speeds, instead of three soft blobs.
+  - Fog (second try — the owner could not see the first, and it must move like real fog, not loop back and forth):
+    two fog textures made once off the main thread from fractal noise warped through itself (wisps and curls, not
+    blobs), thick low down and thinning upwards; three layers drift one way only — far haze barely moving, nearer wisps
+    faster — each at its own size so the whole never shows a repeat, and each thickens and thins over about a minute.
+    `SkinsScreenshotTest.skin_neon_fog_motion` captures it 20 s apart.
+  - The holographic column's light showed as a box beyond the tower (owner's screenshot): the flat shimmer is gone, and
+    the travelling light is a soft lens clipped to the tower's measured body with its rounded cylinder top.
 
 ## CR-23 — Vinyl Lounge: slower record, lighter grooves
 
