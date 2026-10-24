@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
@@ -74,7 +75,9 @@ import kotlinx.coroutines.delay
  *
  * Over the painted foggy city (CR-22) the plane is a real one at night rather than a neon drawing: a dark silhouette
  * rim-lit by the city's teal glow, a warm cockpit, navigation lights (red beacon, green wing light, white tail light)
- * and a faint landing light ahead; the banner is dark cloth with soft lettering, the title pale teal, the artist orchid.
+ * and a faint landing light ahead; the banner is dark cloth with soft lettering, the title muted teal, the artist orchid.
+ * While the music plays it flies: the whole tow sways and climbs gently, wind streaks rush past it and fog wisps slide
+ * behind it.
  */
 @Composable
 internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: Color, playing: Boolean, modifier: Modifier = Modifier) {
@@ -83,6 +86,7 @@ internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: C
     val density = LocalDensity.current
     val measurer = rememberTextMeasurer()
     val time = rememberAnimationTime(quality, running = playing)
+    val flying = quality != VisualQuality.Saver
     var shown by remember { mutableStateOf(title to artist) }
     val fly = remember { Animatable(1f) } // 1 = off to the right, 0 = cruising, -1 = gone to the left
     val reveal = remember { Animatable(0f) }
@@ -111,7 +115,8 @@ internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: C
     }
 
     val titleStyle = type.display
-    val titleColor = lerp(cyan, Color.White, 0.45f)
+    // Muted, not white: the title must read without outshining the painted city (owner, 2026-10-24).
+    val titleColor = lerp(cyan, Color(0xFF8FA9AD), 0.35f)
     val titleLine = remember(shown.first, titleStyle, titleColor, density) { NeonLine.of(measurer, shown.first, titleStyle, titleColor, density) }
     val artistLine = remember(shown.second, type.subtitle, pink, density) {
         shown.second.takeIf { it.isNotBlank() }?.let { NeonLine.of(measurer, it, type.subtitle, pink, density) }
@@ -126,7 +131,12 @@ internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: C
             .semantics { text = AnnotatedString(listOf(title, artist).filter { it.isNotBlank() }.joinToString("\n")) }
             .graphicsLayer {
                 val f = fly.value
-                translationX = if (f >= 0f) f * (size.width + 40.dp.toPx()) else f * (size.width + 80.dp.toPx())
+                val t = time.value
+                // In flight: a slow sway forward and back, a gentle climb and dip, a slight bank.
+                val sway = if (flying) 10.dp.toPx() * sin(t * 0.37f) else 0f
+                translationX = sway + if (f >= 0f) f * (size.width + 40.dp.toPx()) else f * (size.width + 80.dp.toPx())
+                translationY = if (flying) 5.dp.toPx() * sin(t * 0.23f + 1.1f) else 0f
+                rotationZ = if (flying) 0.7f * sin(t * 0.29f) else 0f
                 alpha = if (f >= 0f) min(1f, (1f - f) * 2.5f) else min(1f, (1f + f) * 2f)
             }
             .drawWithCache {
@@ -156,10 +166,13 @@ internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: C
                 val dark = Color(0xFF0C1418)
                 val rim = Stroke(1.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
                 val clothEdge = Stroke(1.dp.toPx())
+                val streak = 1.dp.toPx()
+                val wispR = 70.dp.toPx()
                 onDrawBehind {
                     val t = time.value
                     val glow = lit.value
                     val shownReveal = reveal.value
+                    if (flying) airflow(t, streak, wispR)
                     // The cloth: a wave travelling to the free end, growing towards it.
                     for (i in 0..strips) {
                         val u = i.toFloat() / strips
@@ -276,6 +289,33 @@ internal fun NeonBannerPlane(title: String, artist: String, pink: Color, cyan: C
     )
 }
 
+/**
+ * The air the plane flies through, moving back past it (it flies to the left): faint wind streaks at different speeds
+ * and two fog wisps sliding behind the tow. Drawn first, so plane and banner pass in front of them.
+ */
+private fun DrawScope.airflow(t: Float, streak: Float, wispR: Float) {
+    val air = Color(0xFF9BC4CA)
+    for (i in 0 until 7) {
+        val len = 50.dp.toPx() + (i % 3) * 30.dp.toPx()
+        val speed = (150 + (i * 37) % 90).dp.toPx()
+        val x = ((t * speed + i * 211.dp.toPx()) % (size.width + len * 2)) - len
+        val y = size.height * (0.12f + ((i * 0.618034f) % 1f) * 0.76f)
+        drawLine(
+            Brush.horizontalGradient(listOf(Color.Transparent, air.copy(alpha = 0.10f + (i % 3) * 0.03f), Color.Transparent), startX = x, endX = x + len),
+            Offset(x, y), Offset(x + len, y), streak, StrokeCap.Round,
+        )
+    }
+    val fog = Color(0xFF3E6B78)
+    for (i in 0 until 2) {
+        val speed = (55 + i * 25).dp.toPx()
+        val x = ((t * speed + i * size.width * 0.55f) % (size.width + wispR * 4)) - wispR * 2
+        val c = Offset(x, size.height * (0.35f + i * 0.35f))
+        scale(1f, 0.35f, pivot = c) {
+            drawCircle(Brush.radialGradient(listOf(fog.copy(alpha = 0.16f), Color.Transparent), center = c, radius = wispR), wispR, c)
+        }
+    }
+}
+
 /** A small light with its halo in the haze. */
 private fun DrawScope.navLight(at: Offset, color: Color, lit: Float) {
     val halo = 7.dp.toPx()
@@ -311,8 +351,8 @@ private class NeonLine(val image: ImageBitmap, val pad: Int, val textWidth: Int,
             CanvasDrawScope().draw(density, LayoutDirection.Ltr, Canvas(image), Size(w.toFloat(), h.toFloat())) {
                 val at = Offset(pad.toFloat(), pad.toFloat())
                 // A soft halo in the fog and a bright but not white core.
-                drawText(layout, color.copy(alpha = 0.5f), at, shadow = Shadow(color.copy(alpha = 0.8f), blurRadius = 10.dp.toPx()))
-                drawText(layout, lerp(color, Color.White, 0.5f), at, shadow = Shadow(color.copy(alpha = 0.9f), blurRadius = 3.dp.toPx()))
+                drawText(layout, color.copy(alpha = 0.35f), at, shadow = Shadow(color.copy(alpha = 0.6f), blurRadius = 9.dp.toPx()))
+                drawText(layout, lerp(color, Color.White, 0.22f), at, shadow = Shadow(color.copy(alpha = 0.7f), blurRadius = 3.dp.toPx()))
             }
             return NeonLine(image, pad, layout.size.width, layout.size.height, layout.getParagraphDirection(0) == ResolvedTextDirection.Rtl)
         }

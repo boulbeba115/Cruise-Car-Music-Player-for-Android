@@ -27,9 +27,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.ImageShader
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -103,7 +105,7 @@ fun SkinBackground(modifier: Modifier = Modifier, coverAccent: Color? = null, co
                 }
                 when (style) {
                     BackgroundStyle.CoverGlow -> coverGlow(t, accent, deep)
-                    BackgroundStyle.NeonCity -> city?.draw(this, t) ?: neonFog(t)
+                    BackgroundStyle.NeonCity -> if (city != null) city.draw(this, t) else if (texture != null) neonNight(t, texture)
                     BackgroundStyle.Carbon -> carbonDash(t, tile.takeIf { texture == null }, colors.accent, colors.accent2)
                     BackgroundStyle.Felt -> felt(t, tile.takeIf { texture == null }, colors.textPrimary, colors.accent2)
                     BackgroundStyle.Aurora -> aurora(t, colors.accent, colors.accent2)
@@ -282,24 +284,83 @@ private fun DrawScope.neonLights(t: Float, cyan: Color, pink: Color, horizon: Fl
 }
 
 /**
- * Fog drifting over the painted city (CR-22): three wide banks of teal haze crossing slowly at different heights and
- * speeds, wrapping round, so the backdrop breathes like the fog in it without anything flashing.
+ * The painted city alive (CR-22): searchlights on the tower tops sweeping the sky slowly, a scan of light gliding up the
+ * holographic column, red aviation lights breathing on the antennas, fog banks drifting across. Everything is placed
+ * in the picture's own coordinates through the same crop as [drawCover], so it sits on the painted towers on any screen
+ * shape. Slow, soft and never flashing; it only moves while the music plays.
  */
-private fun DrawScope.neonFog(t: Float) {
+private fun DrawScope.neonNight(t: Float, image: ImageBitmap) {
+    val scale = maxOf(size.width / image.width, size.height / image.height)
+    val ox = (size.width - image.width * scale) / 2f
+    val oy = (size.height - image.height * scale) / 2f
+    fun at(u: Float, v: Float) = Offset(ox + u * image.width * scale, oy + v * image.height * scale)
+
+    // Searchlights: a narrow cone from each light, swaying a few degrees each way on its own slow period.
+    val beam = Color(0xFF9BE8EA)
+    for ((i, src) in NEON_BEAMS.withIndex()) {
+        val p = at(src.x, src.y)
+        val len = p.y + size.height * 0.15f
+        val angle = sin(t * (0.10f + 0.017f * i) + i * 1.9f) * 0.19f
+        val dir = Offset(sin(angle), -cos(angle))
+        val side = Offset(-dir.y, dir.x)
+        val tip = p + dir * len
+        val wide = len * 0.05f
+        val cone = Path().apply {
+            moveTo(p.x + side.x * wide * 0.08f, p.y + side.y * wide * 0.08f)
+            lineTo(tip.x + side.x * wide, tip.y + side.y * wide)
+            lineTo(tip.x - side.x * wide, tip.y - side.y * wide)
+            lineTo(p.x - side.x * wide * 0.08f, p.y - side.y * wide * 0.08f)
+            close()
+        }
+        drawPath(cone, Brush.linearGradient(listOf(beam.copy(alpha = 0.12f), beam.copy(alpha = 0.04f), Color.Transparent), start = p, end = tip))
+        val r = size.minDimension * 0.02f
+        drawCircle(Brush.radialGradient(listOf(beam.copy(alpha = 0.22f), Color.Transparent), center = p, radius = r), r, p)
+    }
+
+    // The holographic column: a band of light gliding up it every few seconds, and a slow shimmer.
+    val colTop = at(0.627f, 0.14f)
+    val colBottom = at(0.700f, 0.575f)
+    val holo = Color(0xFFBDF4F6)
+    clipRect(colTop.x, colTop.y, colBottom.x, colBottom.y) {
+        val h = colBottom.y - colTop.y
+        drawRect(holo.copy(alpha = 0.035f + 0.03f * sin(t * 0.8f)), colTop, Size(colBottom.x - colTop.x, h))
+        val y = colBottom.y - ((t * 0.16f) % 1.2f) * h
+        val band = h * 0.07f
+        drawRect(
+            Brush.verticalGradient(listOf(Color.Transparent, holo.copy(alpha = 0.22f), Color.Transparent), startY = y - band, endY = y + band),
+            Offset(colTop.x, y - band), Size(colBottom.x - colTop.x, band * 2),
+        )
+    }
+
+    // Aviation lights on the antennas, breathing out of step.
+    for ((i, light) in NEON_AVIATION.withIndex()) {
+        val p = at(light.x, light.y)
+        val glow = (sin(t * 1.3f + i * 2.1f) + 1f) / 2f
+        val r = size.minDimension * 0.016f
+        drawCircle(Brush.radialGradient(listOf(Color(0xFFFF4A4A).copy(alpha = 0.55f * glow), Color.Transparent), center = p, radius = r), r, p)
+        drawCircle(Color(0xFFFF7070).copy(alpha = 0.35f + 0.6f * glow), size.minDimension * 0.0028f, p)
+    }
+
+    // Fog banks: three wide soft discs flattened into banks, crossing at different heights and speeds, wrapping round.
     val fog = Color(0xFF3E6B78)
-    val banks = listOf(Triple(0.58f, 9f, 0.13f), Triple(0.72f, 14f, 0.11f), Triple(0.86f, 6f, 0.09f))
+    val banks = listOf(Triple(0.58f, 9f, 0.15f), Triple(0.72f, 14f, 0.13f), Triple(0.86f, 6f, 0.11f))
     for ((i, bank) in banks.withIndex()) {
         val (yFrac, speed, alpha) = bank
         val w = size.width * 0.9f
         val x = ((t * speed + i * size.width * 0.37f) % (size.width + w)) - w / 2
         val y = size.height * yFrac
         val r = w / 2
-        // A soft disc flattened into a bank: no hard edge anywhere.
         scale(1f, 0.28f, pivot = Offset(x, y)) {
             drawCircle(Brush.radialGradient(listOf(fog.copy(alpha = alpha), Color.Transparent), center = Offset(x, y), radius = r), r, Offset(x, y))
         }
     }
 }
+
+/** Searchlights on the painted tower tops, as fractions of the backdrop picture (bg_neon, measured from it). */
+private val NEON_BEAMS = listOf(Offset(0.0955f, 0.493f), Offset(0.237f, 0.337f), Offset(0.278f, 0.334f), Offset(0.636f, 0.355f), Offset(0.853f, 0.446f), Offset(0.880f, 0.444f))
+
+/** Red aviation lights on the antennas of the backdrop. */
+private val NEON_AVIATION = listOf(Offset(0.9359f, 0.3967f), Offset(0.8383f, 0.7715f))
 
 // ---- Other skins --------------------------------------------------------------------------------------------------
 

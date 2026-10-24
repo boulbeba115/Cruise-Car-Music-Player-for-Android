@@ -78,23 +78,27 @@ private fun Art(image: ImageBitmap?, state: PlayerUiState) {
 
 // ---- Vinyl Lounge ---------------------------------------------------------------------------------------------
 
+/** One turn in five seconds: slower than a real record, calmer to look at while driving. */
+private const val VINYL_DEGREES_PER_SECOND = 72f
+
 /** Where the tonearm is, carried from frame to frame so a new track glides it back to the outer groove. */
 private class ArmState {
     var angle = Float.NaN
 }
 
 /**
- * A picture disc on a turntable (CHANGE_REQUESTS.md CR-07.7): the album art covers most of the record with the grooves
- * on top, the record turns at 33⅓ rpm under a fixed reflection, and the tonearm behaves like a real one — it rests off
- * the record, swings onto the outer groove when the music starts, moves toward the label as the song plays, lifts on
- * pause and glides back to the edge for the next track.
+ * A picture disc on a turntable (CHANGE_REQUESTS.md CR-07.7): the album art covers most of the record with light
+ * grooves on top, the record turns slowly under a fixed reflection (one turn in five seconds: 33⅓ rpm looked hectic,
+ * owner 2026-10-24), and the tonearm behaves like a real one — it rests off the record, swings onto the outer groove
+ * when the music starts, moves toward the label as the song plays, lifts on pause and glides back to the edge for the
+ * next track.
  */
 @Composable
 private fun VinylCover(state: PlayerUiState, image: ImageBitmap?, audio: AudioLevels, size: Dp, modifier: Modifier) {
     val colors = CruiseTheme.colors
     val art = rememberCoverBitmap(image, state)
     val moving = CruiseTheme.quality != VisualQuality.Saver
-    val spin = rememberSpin(state.isPlaying && moving, 200f) // 33⅓ rpm
+    val spin = rememberSpin(state.isPlaying && moving, VINYL_DEGREES_PER_SECOND)
     val onRecord by animateFloatAsState(if (state.isPlaying || state.positionMs > 0) 1f else 0f, tween(1100), label = "armOn")
     val lift by animateFloatAsState(if (state.isPlaying) 0f else 1f, tween(500), label = "armLift")
     val arm = remember { ArmState() }
@@ -111,11 +115,12 @@ private fun VinylCover(state: PlayerUiState, image: ImageBitmap?, audio: AudioLe
             clipPath(Path().apply { addOval(Rect(c, r)) }) { drawCropped(art, Rect(c, r)) }
             var k = 0
             var rr = r * 0.30f
+            // Light grooves, so the art stays the picture (owner, 2026-10-24: the rings were too strong).
             while (rr < r) {
-                val gap = k % 9 == 8 // the gap between two songs
-                drawCircle(Color.Black.copy(alpha = if (gap) 0.42f else 0.16f), rr, c, style = Stroke(if (gap) 2.2f else 1f))
-                if (k % 2 == 0) drawCircle(Color.White.copy(alpha = 0.04f), rr + 1.2f, c, style = Stroke(0.8f))
-                rr += r * 0.0115f
+                val gap = k % 6 == 5 // the gap between two songs
+                drawCircle(Color.Black.copy(alpha = if (gap) 0.18f else 0.06f), rr, c, style = Stroke(if (gap) 1.6f else 1f))
+                if (k % 2 == 0) drawCircle(Color.White.copy(alpha = 0.025f), rr + 1.2f, c, style = Stroke(0.8f))
+                rr += r * 0.018f
                 k++
             }
             drawCircle(colors.accent, r * 0.2f, c)
@@ -125,7 +130,7 @@ private fun VinylCover(state: PlayerUiState, image: ImageBitmap?, audio: AudioLe
         }
         // The reflection stays where the light is while the record turns under it.
         drawCircle(
-            Brush.sweepGradient(listOf(Color.Transparent, Color.White.copy(alpha = 0.13f), Color.Transparent, Color.Transparent, Color.White.copy(alpha = 0.09f), Color.Transparent, Color.Transparent), c),
+            Brush.sweepGradient(listOf(Color.Transparent, Color.White.copy(alpha = 0.09f), Color.Transparent, Color.Transparent, Color.White.copy(alpha = 0.06f), Color.Transparent, Color.Transparent), c),
             r, c,
         )
         drawCircle(Color.Black.copy(alpha = 0.7f), r, c, style = Stroke(s * 0.008f))

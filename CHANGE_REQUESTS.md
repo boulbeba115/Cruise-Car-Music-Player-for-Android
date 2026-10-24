@@ -41,6 +41,7 @@ Status legend: ✅ done and verified on the PC (build, unit tests, screenshot te
 | [CR-20](#cr-20--car-report-crash-on-start-listening) | Car report: app crashed on "Start listening" | P0 | ✅ Done · 🚗 needs the car |
 | [CR-21](#cr-21--phones-keep-playing-with-the-screen-off) | Phones: music keeps playing when the screen is switched off | P0 | ✅ Done · 👀 owner review |
 | [CR-22](#cr-22--neon-city-painted-backdrop-and-the-skin-toned-to-match-it) | Neon City: a painted foggy teal city, and the billboard, plane and colours toned to match it | P1 | ✅ Done · 👀 owner review |
+| [CR-23](#cr-23--vinyl-lounge-slower-record-lighter-grooves) | Vinyl Lounge: slower record, lighter grooves over the cover | P1 | ✅ Done · 👀 owner review |
 
 ---
 
@@ -538,6 +539,21 @@ phone's screen went off.
     lettering, title pale teal and artist orchid.
   - Background motion: slow drifting fog banks instead of light streaks on a street that is no longer there.
 - `bg_neon.webp` (1280 px, 26 KB); the drawn city remains only as a fallback.
+- Owner's review of the first restyle: the title was still bright, and both the city and the plane should move.
+  - Title muted (teal toward grey, less halo, core no longer near-white).
+  - The city, while music plays: the searchlights on the painted towers sweep the sky slowly, a band of light glides
+    up the holographic column, the antennas' red lights breathe, fog banks drift. Positions are measured on the picture
+    and mapped through the same crop as the image, so they stay on the towers on any screen shape.
+  - The plane flies: the tow sways and climbs gently with a slight bank, wind streaks rush past and fog wisps slide
+    behind it. Nothing flashes; all of it stops when the music is paused and in the Saver quality.
+
+## CR-23 — Vinyl Lounge: slower record, lighter grooves
+
+**Status: ✅ Done · 👀 owner review** — owner (2026-10-24): the disc spins too fast, and the rings over the cover are too
+strong.
+- One turn in five seconds (72°/s) instead of a real 33⅓ rpm (200°/s).
+- Grooves further apart and about a third as dark, lighter gaps between songs, a softer fixed reflection: the album
+  art stays the picture.
 
 ## Execution plan
 
